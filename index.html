@@ -2,6 +2,15 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body,{delimiters:[
+          {left:'$$', right:'$$', display:true},
+          {left:'\\[', right:'\\]', display:true},
+          {left:'$', right:'$', display:false},
+          {left:'\\(', right:'\\)', display:false}
+        ]});"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>社会雷达 Social Radar</title>
   <meta name="description" content="一个用于展示与原型验证的社会雷达单页站点" />
@@ -94,7 +103,7 @@
         <div class="col-6 card">
           <p>
           </p>
-          <p class="muted">下方仅为原型公式：</p>
+          <p class="muted">原型公式：$f_{d,s}=\frac{\frac{\Delta S}{\Delta t}}{f_0}=\frac{v_s}{f_0}$</p>
           <p>
           </p>
           </div>
