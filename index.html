@@ -1,72 +1,97 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-        onload="renderMathInElement(document.body,{delimiters:[
-          {left:'$$', right:'$$', display:true},
-          {left:'\\[', right:'\\]', display:true},
-          {left:'$', right:'$', display:false},
-          {left:'\\(', right:'\\)', display:false}
-        ]});"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>社会雷达 Social Radar</title>
-  <meta name="description" content="一个用于展示与原型验证的社会雷达单页站点" />
-  <style>
-    :root{
-      --bg:#0b1220;        /* 背景深色 */
-      --panel:#0e1627;     /* 面板 */
-      --muted:#93a3b8;     /* 次级文本 */
-      --text:#e6eef8;      /* 主文本 */
-      --accent:#7dd3fc;    /* 强调（蓝青） */
-      --accent2:#a78bfa;   /* 次强调（紫） */
-      --border:#1e293b;    /* 边框 */
-      --card:#0b1530;      /* 卡片底 */
-    }
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans",sans-serif}
-    a{color:var(--accent);text-decoration:none}
-    a:hover{text-decoration:underline}
-    img{max-width:100%;display:block}
-    .container{max-width:1080px;margin:0 auto;padding:24px}
-    header{position:sticky;top:0;background:rgba(11,18,32,.7);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:10}
-    .nav{display:flex;align-items:center;justify-content:space-between}
-    .brand{font-weight:800;letter-spacing:.3px}
-    .menu{display:flex;gap:14px}
-    .menu a{padding:10px 12px;border-radius:10px}
-    .menu a:hover{background:rgba(255,255,255,.06)}
-    .hero{padding:68px 0 28px}
-    .hero h1{font-size:40px;margin:8px 0}
-    .hero p{color:var(--muted);max-width:760px}
-    .btns{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
-    .btn{display:inline-block;padding:10px 14px;border-radius:12px;background:var(--accent);color:#06203a;font-weight:800}
-    .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
-    section{padding:36px 0;border-top:1px solid var(--border)}
-    h2{margin:0 0 14px;font-size:22px}
-    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-    .col-6{grid-column:span 6}
-    .col-4{grid-column:span 4}
-    .col-8{grid-column:span 8}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
-    .muted{color:var(--muted)}
-    footer{padding:28px 0;color:var(--muted)}
-    code,kbd{background:#0f223f;color:#cde7ff;padding:2px 6px;border-radius:8px}
-    .badge{display:inline-block;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted);font-size:12px}
-    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#10223e;border:1px solid var(--border);margin-right:6px}
-    .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .table{width:100%;border-collapse:collapse;font-size:14px}
-    .table th,.table td{border-bottom:1px solid var(--border);padding:8px 6px;text-align:left}
-    .kbd{border:1px solid var(--border);padding:2px 6px;border-radius:6px;background:#0d1b34}
-    @media (max-width:900px){.col-6,.col-4,.col-8{grid-column:span 12}.hero{padding-top:48px}.hero h1{font-size:32px}}
-    /* 简易图例 */
-    .legend{display:flex;gap:10px;align-items:center}
-    .legend span{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--accent)}
-    .legend .s2{background:var(--accent2)}
-    /* 上传区域 */
-    .drop{border:1px dashed var(--border);border-radius:14px;padding:16px;background:#0d1b34}
-  </style>
+<meta charset="utf-8" />
+.container{max-width:1080px;margin:0 auto;padding:24px}
+header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:10}
+.nav{display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800;letter-spacing:.3px}
+.menu{display:flex;gap:14px}
+.menu a{padding:10px 12px;border-radius:10px}
+.menu a:hover{background:rgba(0,0,0,.06)}
+.hero{padding:68px 0 28px}
+.hero h1{font-size:40px;margin:8px 0}
+.hero p{color:var(--muted);max-width:760px}
+.btns{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
+.btn{display:inline-block;padding:10px 14px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800}
+.btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+section{padding:36px 0;border-top:1px solid var(--border)}
+h2{margin:0 0 14px;font-size:22px}
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+.col-6{grid-column:span 6}
+.col-4{grid-column:span 4}
+.col-8{grid-column:span 8}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
+.muted{color:var(--muted)}
+footer{padding:28px 0;color:var(--muted)}
+code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
+.badge{display:inline-block;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted);font-size:12px}
+.pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f3f4f6;border:1px solid var(--border);margin-right:6px}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.table{width:100%;border-collapse:collapse;font-size:14px}
+.table th,.table td{border-bottom:1px solid var(--border);padding:8px 6px;text-align:left}
+.kbd{border:1px solid var(--border);padding:2px 6px;border-radius:6px;background:#f3f4f6}
+@media (max-width:900px){.col-6,.col-4,.col-8{grid-column:span 12}.hero{padding-top:48px}.hero h1{font-size:32px}}
+.legend{display:flex;gap:10px;align-items:center}
+.legend span{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--accent)}
+.legend .s2{background:var(--accent2)}
+.drop{border:1px dashed var(--border);border-radius:14px;padding:16px;background:#f9fafb}
+/* 深色主题变量与覆盖 */
+[data-theme="dark"]{
+--bg:#0b1220;
+--panel:#0e1627;
+--muted:#93a3b8;
+--text:#e6eef8;
+--accent:#7dd3fc;
+--accent2:#a78bfa;
+--border:#1e293b;
+--card:#0b1530;
+}
+/* 深色下的头部背景覆盖 */
+[data-theme="dark"] header{background:rgba(11,18,32,.7)}
+</style>
+</head>
+<body>
+<!-- 其余内容保持不变，这里省略 -->
+<script>
+// 主题切换：自动注入按钮 + 本地持久化
+(function(){
+const KEY = 'theme';
+const root = document.documentElement;
+const saved = localStorage.getItem(KEY);
+const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const initTheme = saved || (prefersDark ? 'dark' : 'light');
+if(initTheme === 'dark') root.setAttribute('data-theme','dark');
+
+
+// 注入按钮（如果没有）
+const menu = document.querySelector('nav.menu');
+if(menu && !document.getElementById('themeToggle')){
+const btn = document.createElement('button');
+btn.id = 'themeToggle';
+btn.className = 'btn secondary';
+btn.textContent = '🌓 主题';
+btn.style.marginLeft = '8px';
+btn.style.padding = '8px 10px';
+menu.appendChild(btn);
+}
+
+
+const btn = document.getElementById('themeToggle');
+if(btn){
+btn.addEventListener('click', ()=>{
+const isDark = root.getAttribute('data-theme') === 'dark';
+if(isDark){
+root.removeAttribute('data-theme');
+localStorage.setItem(KEY,'light');
+}else{
+root.setAttribute('data-theme','dark');
+localStorage.setItem(KEY,'dark');
+}
+});
+}
+})();
+</script>
 </head>
 <body>
   <!-- 顶部导航 -->
