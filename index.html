@@ -2,6 +2,25 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>社会雷达 Social Radar</title>
+<meta name="description" content="一个用于展示与原型验证的社会雷达单页站点：数据管道、权重频移计算、可视化与下载。" />
+<style>
+:root{
+--bg:#f9fafb; /* 背景：浅色 */
+--panel:#ffffff; /* 面板 */
+--muted:#4b5563; /* 次级文本 */
+--text:#111827; /* 主文本 */
+--accent:#0ea5e9; /* 强调色：蓝 */
+--accent2:#7c3aed; /* 次强调：紫 */
+--border:#e5e7eb; /* 边框 */
+--card:#ffffff; /* 卡片底 */
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans",sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+img{max-width:100%;display:block}
 .container{max-width:1080px;margin:0 auto;padding:24px}
 header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:10}
 .nav{display:flex;align-items:center;justify-content:space-between}
@@ -50,48 +69,6 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
 /* 深色下的头部背景覆盖 */
 [data-theme="dark"] header{background:rgba(11,18,32,.7)}
 </style>
-</head>
-<body>
-<!-- 其余内容保持不变，这里省略 -->
-<script>
-// 主题切换：自动注入按钮 + 本地持久化
-(function(){
-const KEY = 'theme';
-const root = document.documentElement;
-const saved = localStorage.getItem(KEY);
-const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-const initTheme = saved || (prefersDark ? 'dark' : 'light');
-if(initTheme === 'dark') root.setAttribute('data-theme','dark');
-
-
-// 注入按钮（如果没有）
-const menu = document.querySelector('nav.menu');
-if(menu && !document.getElementById('themeToggle')){
-const btn = document.createElement('button');
-btn.id = 'themeToggle';
-btn.className = 'btn secondary';
-btn.textContent = '🌓 主题';
-btn.style.marginLeft = '8px';
-btn.style.padding = '8px 10px';
-menu.appendChild(btn);
-}
-
-
-const btn = document.getElementById('themeToggle');
-if(btn){
-btn.addEventListener('click', ()=>{
-const isDark = root.getAttribute('data-theme') === 'dark';
-if(isDark){
-root.removeAttribute('data-theme');
-localStorage.setItem(KEY,'light');
-}else{
-root.setAttribute('data-theme','dark');
-localStorage.setItem(KEY,'dark');
-}
-});
-}
-})();
-</script>
 </head>
 <body>
   <!-- 顶部导航 -->
@@ -226,159 +203,44 @@ localStorage.setItem(KEY,'dark');
     </footer>
   </main>
 
-  <script>
-    // 简单 CSV 解析（逗号分隔，首行表头包含 date, star, like）
-    function parseCSV(text){
-      const lines = text.trim().split(/\r?\n/);
-      const header = lines[0].split(',').map(s=>s.trim().toLowerCase());
-      const idx = {
-        date: header.indexOf('date'),
-        star: header.indexOf('star'),
-        like: header.indexOf('like')
-      };
-      if(idx.date<0||idx.star<0||idx.like<0){throw new Error('CSV 必须包含列：date, star, like');}
-      const rows = [];
-      for(let i=1;i<lines.length;i++){
-        if(!lines[i].trim()) continue;
-        const cols = lines[i].split(',');
-        const d = new Date(cols[idx.date].trim());
-        const star = parseFloat(cols[idx.star]);
-        const like = parseFloat(cols[idx.like]);
-        if(isFinite(d) && isFinite(star) && isFinite(like)){
-          const key = d.toISOString().slice(0,10); // 聚合到日
-          rows.push({date:key, star, like});
-        }
-      }
-      // 按日聚合（均值）
-      const byDay = {};
-      for(const r of rows){
-        if(!byDay[r.date]) byDay[r.date] = {date:r.date, n:0, star:0, like:0};
-        byDay[r.date].n++; byDay[r.date].star += r.star; byDay[r.date].like += r.like;
-      }
-      const arr = Object.values(byDay).map(o=>({date:o.date, star:o.star/o.n, like:o.like/o.n}));
-      arr.sort((a,b)=>a.date.localeCompare(b.date));
-      return arr;
-    }
+ <script>
+// 主题切换：自动注入按钮 + 本地持久化
+(function(){
+const KEY = 'theme';
+const root = document.documentElement;
+const saved = localStorage.getItem(KEY);
+const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+const initTheme = saved || (prefersDark ? 'dark' : 'light');
+if(initTheme === 'dark') root.setAttribute('data-theme','dark');
 
-    function movingAvg(series, k){
-      const out = new Array(series.length).fill(null);
-      for(let i=0;i<series.length;i++){
-        const s = Math.max(0, i-k+1);
-        const window = series.slice(s, i+1);
-        const mean = window.reduce((acc,v)=>acc+v,0)/window.length;
-        out[i] = mean;
-      }
-      return out;
-    }
 
-    function normalize(arr){
-      const min = Math.min(...arr), max = Math.max(...arr);
-      if(max-min===0) return arr.map(()=>0.0);
-      return arr.map(v => (v-min)/(max-min));
-    }
+// 注入按钮（如果没有）
+const menu = document.querySelector('nav.menu');
+if(menu && !document.getElementById('themeToggle')){
+const btn = document.createElement('button');
+btn.id = 'themeToggle';
+btn.className = 'btn secondary';
+btn.textContent = '🌓 主题';
+btn.style.marginLeft = '8px';
+btn.style.padding = '8px 10px';
+menu.appendChild(btn);
+}
 
-    function computeSR(data, k, alpha){
-      const star = data.map(d=>d.star);
-      const like = data.map(d=>d.like);
-      const ma = movingAvg(star, k);
-      const likeN = normalize(like);
-      const sr = ma.map((v,i)=>{
-        const prev = i>0? ma[i-1] : ma[i];
-        const diff = v - prev; // 一阶差分
-        return diff * (1 + alpha * likeN[i]);
-      });
-      return {ma, sr};
-    }
 
-    function drawChart(canvas, dates, ma, sr){
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      const W = canvas.width, H = canvas.height, P = 36; // padding
-      // 轴
-      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(P, P); ctx.lineTo(P, H-P); ctx.lineTo(W-P, H-P); ctx.stroke();
-      // 计算范围
-      const allY = [...ma, ...sr].filter(v=>v!==null && isFinite(v));
-      const yMin = Math.min(...allY), yMax = Math.max(...allY);
-      const xStep = (W-2*P)/Math.max(1, dates.length-1);
-      function yMap(v){
-        if(yMax===yMin) return H/2;
-        return H-P - (v - yMin) / (yMax - yMin) * (H-2*P);
-      }
-      // 网格
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-      for(let i=0;i<5;i++){
-        const y = P + i*(H-2*P)/4; ctx.beginPath(); ctx.moveTo(P,y); ctx.lineTo(W-P,y); ctx.stroke();
-      }
-      // 画线函数
-      function drawLine(arr, color){
-        ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
-        for(let i=0;i<arr.length;i++){
-          const x = P + i*xStep; const y = yMap(arr[i]);
-          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        }
-        ctx.stroke();
-      }
-      // 绘制
-      drawLine(ma, '#7dd3fc'); // 蓝青
-      drawLine(sr, '#a78bfa'); // 紫
-      // 简易刻度
-      ctx.fillStyle = '#93a3b8'; ctx.font = '12px system-ui';
-      const tickN = 6;
-      for(let i=0;i<tickN;i++){
-        const t = i/(tickN-1); const y = H-P - t*(H-2*P);
-        const val = (yMin + t*(yMax-yMin)).toFixed(2);
-        ctx.fillText(val, 6, y+4);
-      }
-      // X 轴日期（最多 8 个）
-      const step = Math.ceil(dates.length/8);
-      for(let i=0;i<dates.length;i+=step){
-        const x = P + i*xStep; ctx.fillText(dates[i].slice(5), x-14, H-P+14);
-      }
-    }
-
-    // 文件读取 + 事件绑定
-    const fileInput = document.getElementById('file');
-    const drop = document.getElementById('drop');
-    const chart = document.getElementById('chart');
-    const summary = document.getElementById('summary');
-    const download = document.getElementById('download');
-
-    function handleFile(f){
-      const reader = new FileReader();
-      reader.onload = () => {
-        try{
-          const k = Math.max(1, parseInt(document.getElementById('win').value||5,10));
-          const alpha = parseFloat(document.getElementById('alpha').value||1.0);
-          const data = parseCSV(reader.result);
-          const {ma, sr} = computeSR(data, k, alpha);
-          const dates = data.map(d=>d.date);
-          drawChart(chart, dates, ma, sr);
-          // 汇总
-          const last = sr[sr.length-1];
-          const meanSR = sr.reduce((a,b)=>a+b,0)/sr.length;
-          summary.textContent = `共 ${dates.length} 天；k=${k}，α=${alpha}；最后一天 SR=${last.toFixed(4)}；均值 SR=${meanSR.toFixed(4)}`;
-          // 导出 CSV
-          const header = 'date,star_ma,SR\n';
-          const lines = dates.map((d,i)=>`${d},${ma[i].toFixed(6)},${sr[i].toFixed(6)}`).join('\n');
-          const blob = new Blob([header+lines], {type:'text/csv'});
-          download.href = URL.createObjectURL(blob);
-        }catch(err){
-          alert('解析/计算失败：'+err.message);
-        }
-      };
-      reader.readAsText(f);
-    }
-
-    fileInput.addEventListener('change', e=>{
-      if(e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
-    });
-    ;['dragenter','dragover'].forEach(evt=>drop.addEventListener(evt, e=>{e.preventDefault(); drop.style.background='#0c1d39';}));
-    ;['dragleave','drop'].forEach(evt=>drop.addEventListener(evt, e=>{e.preventDefault(); drop.style.background='#0d1b34';}));
-    drop.addEventListener('drop', e=>{
-      const f = e.dataTransfer.files && e.dataTransfer.files[0];
-      if(f) handleFile(f);
-    });
-  </script>
+const btn = document.getElementById('themeToggle');
+if(btn){
+btn.addEventListener('click', ()=>{
+const isDark = root.getAttribute('data-theme') === 'dark';
+if(isDark){
+root.removeAttribute('data-theme');
+localStorage.setItem(KEY,'light');
+}else{
+root.setAttribute('data-theme','dark');
+localStorage.setItem(KEY,'dark');
+}
+});
+}
+})();
+</script>
 </body>
 </html>
