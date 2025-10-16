@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body,{delimiters:[
+          {left:'$$', right:'$$', display:true},
+          {left:'\\[', right:'\\]', display:true},
+          {left:'$', right:'$', display:false},
+          {left:'\\(', right:'\\)', display:false}
+        ]});"></script>
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -105,7 +114,7 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
         <div class="col-6 card">
           <p>
           </p>
-          <p class="muted">原型公式：$f_{d,s}=\frac{\frac{\Delta S}{\Delta t}}{f_0}=\frac{v_s}{f_0}$</p>
+          <p class="muted">原型公式：</p>$$f_{d,s}=\frac{\frac{\Delta S}{\Delta t}}{f_0}=\frac{v_s}{f_0}$$
           <p>
           </p>
           </div>
