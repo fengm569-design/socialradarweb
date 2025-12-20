@@ -88,6 +88,7 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
         <a href="#about">概念</a>
         <a href="#analyze">上传与分析</a>
         <a href="#dashboard">可视化</a>
+        <a href="#results">知乎展示</a>
         <a href="#docs">说明</a>
       </nav>
     </div>
@@ -161,55 +162,121 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
         </div>
       </div>
     </section>
+<section id="results">
+  <h2>知乎抓取结果</h2>
+
+  <div class="card">
+    <div class="flex" style="justify-content:space-between;align-items:center">
+      <div class="muted" id="resultsMeta">Loading...</div>
+
+      <input
+        id="kwFilter"
+        placeholder="按关键词过滤（可选）"
+        style="padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+               background:var(--panel);color:var(--text);min-width:220px"
+      />
+    </div>
+
+    <div id="resultsList" style="margin-top:12px">Loading...</div>
+  </div>
+
+  <p class="muted" style="margin-top:10px">
+    数据来源：仓库 data/zhihu_data.json（由 GitHub Actions 定时更新）
+  </p>
+</section>
+
 <section id="papers">
   <h2>我们的工作</h2>
   <div class="grid">
     <div class="col-6 card">
       <article class="paper">
-        <h3 style="margin:0 0 6px"> Social Radars for Social Vision of Intelligent Vehicles: A New Direction for Vehicle Research and Development</h3>
-        <p>
-          <a href="https://ieeexplore.ieee.org/document/10499903" class="btn secondary" style="padding:6px 10px">PDF</a>
-        </p>
+        <h3 style="margin:0 0 6px">Social Radars for Social Vision of Intelligent Vehicles: A New Direction for Vehicle Research and Development</h3>
+        <p><a href="https://ieeexplore.ieee.org/document/10499903" class="btn secondary" style="padding:6px 10px">PDF</a></p>
       </article>
     </div>
-    <!-- 再来一篇 -->
+
     <div class="col-6 card">
       <article class="paper">
         <h3 style="margin:0 0 6px">Social Radars: Finding Targets in Cyberspace for Cybersecurity</h3>
-        <p>
-          <a href="https://ieeexplore.ieee.org/document/10415906" class="btn secondary" style="padding:6px 10px">PDF</a>
-        </p>
+        <p><a href="https://ieeexplore.ieee.org/document/10415906" class="btn secondary" style="padding:6px 10px">PDF</a></p>
+      </article>
+    </div>
+
+    <div class="col-6 card">
+      <article class="paper">
+        <h3 style="margin:0 0 6px">VLAS: From Individual to Social Intelligence via Social Radar-Augmented VLA Agents</h3>
+        <p><a href="papers/VLAS.pdf" class="btn secondary" style="padding:6px 10px">PDF</a></p>
+      </article>
+    </div>
+
+    <div class="col-6 card">
+      <article class="paper">
+        <h3 style="margin:0 0 6px">Social Doppler: A Framework for Mechatronic Perception Beyond Physical Radar</h3>
+        <p><a href="papers/Social Doppler A Framework for Mechatronic Perception Beyond.pdf" class="btn secondary" style="padding:6px 10px">PDF</a></p>
       </article>
     </div>
   </div>
 </section>
-   <div class="col-6 card">
-        <article class="paper">
-          <h3 style="margin:0 0 6px">VLAS: From Individual to Social Intelligence via Social Radar-Augmented VLA Agents</h3>
-          <p>
-            <a href="papers/VLAS.pdf" style="padding:6px 10px">PDF</a>
-          </p>
-        </article>
-      </div>
-    </div>
-    </section>
-   </section>
-   <div class="col-6 card">
-        <article class="paper">
-          <h3 style="margin:0 0 6px">Social Doppler: A Framework for Mechatronic Perception Beyond Physical Radar</h3>
-          <p>
-            <a href="papers/Social Doppler A Framework for Mechatronic Perception Beyond.pdf" style="padding:6px 10px">PDF</a>
-          </p>
-        </article>
-      </div>
-    </div>
-    </section>
 
     <footer>
       <div class="container">
         <small class="muted">© 2025 社会雷达 · 研究原型页面。前端纯静态、无数据外传，所有计算均在浏览器本地完成。</small>
       </div>
     </footer>
+<script>
+async function fetchJson(url){
+  const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
+  if(!res.ok) throw new Error("Fetch failed: " + res.status);
+  return await res.json();
+}
+
+function escapeHtml(s){
+  return (s || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+function renderRows(rows){
+  const list = document.getElementById("resultsList");
+  const kw = (document.getElementById("kwFilter").value || "").trim();
+  const filtered = kw ? rows.filter(r => (r.keyword || "").includes(kw)) : rows;
+
+  list.innerHTML = filtered.slice(0, 80).map(r => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="font-weight:800;margin-bottom:6px">
+        <a href="${r.url}" target="_blank" rel="noreferrer">${escapeHtml(r.title)}</a>
+      </div>
+      <div class="muted" style="font-size:12px">
+        ${escapeHtml(r.keyword)}｜${escapeHtml(r.author)}｜${escapeHtml(r.upvotes)}｜${escapeHtml(r.comments)}｜${escapeHtml(r.scraped_at)}
+      </div>
+      <div style="margin-top:6px;line-height:1.6">${escapeHtml(r.excerpt)}</div>
+    </div>
+  `).join("");
+
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="muted" style="padding:12px 0">没有匹配的数据</div>`;
+  }
+}
+
+async function loadResults(){
+  try{
+    const metaEl = document.getElementById("resultsMeta");
+    const meta = await fetchJson("./data/meta.json");
+    metaEl.textContent = `更新时间：${meta.updated_at}｜关键词：${(meta.keywords||[]).join("、")}｜数据量：${meta.count}`;
+
+    const rows = await fetchJson("./data/zhihu_data.json");
+    renderRows(rows);
+
+    document.getElementById("kwFilter").addEventListener("input", () => renderRows(rows));
+  }catch(e){
+    document.getElementById("resultsMeta").textContent = "加载失败：" + e.message;
+    document.getElementById("resultsList").textContent = "";
+  }
+}
+
+loadResults();
+</script>
   </main>
 
  <script>
