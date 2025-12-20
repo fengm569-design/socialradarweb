@@ -3,9 +3,8 @@ name: scrape-zhihu
 on:
   workflow_dispatch:
   schedule:
-    # GitHub Actions 用 UTC
-    # 例：北京时间 10:00 = UTC 02:00
-    - cron: "0 2 * * *"
+    - cron: "0 * * * *"
+
 
 # 防止并发运行导致 push 互相冲突
 concurrency:
