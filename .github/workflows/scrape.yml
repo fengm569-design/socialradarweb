@@ -3,7 +3,7 @@ name: scrape-zhihu
 on:
   workflow_dispatch:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "5 * * * *"
 
 
 # 防止并发运行导致 push 互相冲突
@@ -51,7 +51,7 @@ jobs:
 
       - name: Run scraper
         env:
-          KEYWORDS: '["自动化学会"]'
+          KEYWORDS: '["自动化学会","王飞跃"]'
           MAX_RESULTS_PER_KEYWORD: "50"
           HEADLESS: "true"
         run: |
