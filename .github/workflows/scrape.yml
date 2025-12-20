@@ -3,7 +3,7 @@ name: scrape-zhihu
 on:
   workflow_dispatch:
   schedule:
-    - cron: "1 * * * *"
+    - cron: "*/5 * * * *"
 
 
 # 防止并发运行导致 push 互相冲突
