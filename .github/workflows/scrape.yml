@@ -2,6 +2,9 @@ name: Zhihu Scrape (Playwright)
 
 on:
   workflow_dispatch: {}
+  # 如果你想定时跑，取消注释并改 cron
+  # schedule:
+  #   - cron: "0 2 * * *"
 
 permissions:
   contents: write
@@ -25,7 +28,11 @@ jobs:
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install playwright pandas; fi
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install playwright pandas
+          fi
 
       - name: Install Playwright browsers
         run: |
@@ -49,48 +56,79 @@ jobs:
         run: |
           cp storage_state.json scripts/storage_state.json || true
 
-      - name: Run scraper
+      - name: Run scraper (scripts/zhihu.py)
         env:
           KEYWORDS: "王飞跃,自动化学会"
           MAX_RESULTS_PER_KEYWORD: "30"
           HEADLESS: "true"
+          GOTO_TIMEOUT_MS: "180000"
+          GOTO_RETRIES: "3"
         run: |
           python scripts/zhihu.py
 
-      - name: Convert CSV -> JSON in data/
+      - name: Build data/zhihu_data.json and data/meta.json for website
+        env:
+          KEYWORDS: "王飞跃,自动化学会"
         run: |
           python - << 'PY'
-          import pandas as pd
+          import json, os
           from pathlib import Path
+          import pandas as pd
+          import datetime
 
-          csv_path = Path("data/zhihu_data.csv")
+          data_dir = Path("data")
+          data_dir.mkdir(exist_ok=True)
+
+          # 优先用固定文件名；如果不存在就找 data/ 下最新 csv
+          csv_path = data_dir / "zhihu_data.csv"
           if not csv_path.exists():
-            print("No data/zhihu_data.csv found. (可能抓取为空/被风控)")
-            raise SystemExit(0)
+              csvs = sorted(data_dir.glob("*.csv"), key=lambda p: p.stat().st_mtime, reverse=True)
+              if not csvs:
+                  print("No CSV found in data/. Skip building JSON/meta.")
+                  raise SystemExit(0)
+              csv_path = csvs[0]
+              # 统一复制成固定名，保持你原来的目录结构
+              fixed = data_dir / "zhihu_data.csv"
+              if csv_path.name != fixed.name:
+                  fixed.write_bytes(csv_path.read_bytes())
+                  csv_path = fixed
 
           df = pd.read_csv(csv_path)
-          out = Path("data/zhihu_data.json")
-          out.write_text(df.to_json(orient="records", force_ascii=False), encoding="utf-8")
-          print("Wrote", out)
+
+          # 输出网页读取的 JSON
+          out_json = data_dir / "zhihu_data.json"
+          out_json.write_text(df.to_json(orient="records", force_ascii=False), encoding="utf-8")
+          print("Wrote", out_json)
+
+          # 输出网页读取的 meta.json
+          kw = os.getenv("KEYWORDS", "")
+          keywords = [x.strip() for x in kw.replace("，", ",").split(",") if x.strip()]
+          meta = {
+              "updated_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+              "keywords": keywords,
+              "count": int(len(df)),
+          }
+          meta_path = data_dir / "meta.json"
+          meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
+          print("Wrote", meta_path)
           PY
 
-      - name: Commit and push updated data
+      - name: Commit and push updated data (csv/json/meta)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # 只提交固定文件（避免把一堆 debug/ 增量都推上来）
-          git add data/zhihu_data.csv data/zhihu_data.json || true
+          git add data/zhihu_data.csv data/zhihu_data.json data/meta.json || true
 
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
 
-          git commit -m "chore: update zhihu data"
+          git commit -m "update zhihu data"
           git push
 
-      - name: Upload artifacts (optional)
+      - name: Upload artifacts (debug)
         uses: actions/upload-artifact@v4
         with:
           name: zhihu-output
