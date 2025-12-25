@@ -36,16 +36,18 @@ jobs:
             raise SystemExit("Missing secret: storage")
           with open("storage_state.json", "w", encoding="utf-8") as f:
             f.write(s)
-          print("storage_state.json restored")
+          print("storage_state.json restored in repo root")
           PY
 
-      - name: Run scraper
+      - name: Run scraper (scripts/zhihu.py)
         env:
           KEYWORDS: "王飞跃,自动化学会"
           MAX_RESULTS_PER_KEYWORD: "30"
           HEADLESS: "true"
         run: |
-          python zhihu.py
+          # 兼容脚本用相对路径读取 storage_state.json 的情况
+          cp storage_state.json scripts/storage_state.json || true
+          python scripts/zhihu.py
 
       - name: Upload output artifacts
         uses: actions/upload-artifact@v4
@@ -53,5 +55,6 @@ jobs:
           name: zhihu-output
           path: |
             data/
+            scripts/data/
             *.csv
           if-no-files-found: warn
