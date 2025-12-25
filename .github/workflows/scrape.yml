@@ -1,76 +1,57 @@
-name: scrape-zhihu
+name: Zhihu Scrape (Playwright)
 
 on:
-  workflow_dispatch:
-  schedule:
-    - cron: "5 * * * *"
-
-
-# 防止并发运行导致 push 互相冲突
-concurrency:
-  group: scrape-zhihu
-  cancel-in-progress: true
-
-# 允许 workflow 把生成的数据 push 回仓库
-permissions:
-  contents: write
+  workflow_dispatch: {}
 
 jobs:
-  run:
+  scrape:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          # 关键：拉全历史，后面 rebase 才不会出问题
-          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install deps
+      - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
-          pip install playwright pandas
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; else pip install playwright pandas; fi
+
+      - name: Install Playwright browsers
+        run: |
           python -m playwright install --with-deps chromium
 
-      # （可选）如果你需要登录态：把 storage_state.json 的 base64 放到 GitHub Secrets
-      # Secret 名字：ZHIHU_STORAGE_STATE_B64
-      - name: Restore storage_state.json (optional)
+      - name: Restore storage_state.json from Secret "storage"
         env:
-          ZHIHU_STORAGE_STATE_B64: ${{ secrets.ZHIHU_STORAGE_STATE_B64 }}
+          STORAGE_JSON: ${{ secrets.storage }}
         run: |
-          if [ -n "$ZHIHU_STORAGE_STATE_B64" ]; then
-            echo "$ZHIHU_STORAGE_STATE_B64" | base64 -d > storage_state.json
-            echo "storage_state.json restored"
-          else
-            echo "No storage state provided"
-          fi
+          python - << 'PY'
+          import os
+          s = os.environ.get("STORAGE_JSON", "")
+          if not s.strip():
+            raise SystemExit("Missing secret: storage")
+          with open("storage_state.json", "w", encoding="utf-8") as f:
+            f.write(s)
+          print("storage_state.json restored")
+          PY
 
       - name: Run scraper
         env:
-          KEYWORDS: '["自动化学会","王飞跃"]'
-          MAX_RESULTS_PER_KEYWORD: "50"
+          KEYWORDS: "王飞跃,自动化学会"
+          MAX_RESULTS_PER_KEYWORD: "30"
           HEADLESS: "true"
         run: |
-          mkdir -p data
-          python scripts/zhihu_scrape_once.py
+          python zhihu.py
 
-      - name: Commit data
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          # 把生成的数据加入版本控制
-          git add data/*.json data/*.csv || true
-
-          # 没有变化就不提交
-          git commit -m "update zhihu data" || echo "No changes"
-
-          # 关键：先同步远端再推送，避免 main -> main (fetch first)
-          git pull --rebase origin main
-
-          # 推送到 main
-          git push origin main
+      - name: Upload output artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhihu-output
+          path: |
+            data/
+            *.csv
+          if-no-files-found: warn
