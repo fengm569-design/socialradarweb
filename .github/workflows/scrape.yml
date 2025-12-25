@@ -3,6 +3,9 @@ name: Zhihu Scrape (Playwright)
 on:
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -10,6 +13,9 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -43,21 +49,7 @@ jobs:
         run: |
           cp storage_state.json scripts/storage_state.json || true
 
-      - name: Sanity check storage_state.json
-        run: |
-          python - << 'PY'
-          import json
-          with open("storage_state.json","r",encoding="utf-8") as f:
-            d=json.load(f)
-          cookies = d.get("cookies", [])
-          origins = d.get("origins", [])
-          zhihu_cookies = [c for c in cookies if (c.get("domain","").lstrip(".")).endswith("zhihu.com")]
-          print("cookies:", len(cookies))
-          print("origins:", len(origins))
-          print("zhihu cookies:", len(zhihu_cookies))
-          PY
-
-      - name: Run scraper (scripts/zhihu.py)
+      - name: Run scraper
         env:
           KEYWORDS: "王飞跃,自动化学会"
           MAX_RESULTS_PER_KEYWORD: "30"
@@ -65,14 +57,40 @@ jobs:
         run: |
           python scripts/zhihu.py
 
-      - name: Upload output artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: zhihu-output
-          path: |
-            data/
-            debug/
-            scripts/data/
-            scripts/debug/
-            *.csv
-          if-no-files-found: warn
+      # ✅ 把 CSV 转成网页可用 JSON（推荐提交这个）
+      - name: Convert CSV to website JSON
+        run: |
+          python - << 'PY'
+          import pandas as pd
+          from pathlib import Path
+
+          csv_path = Path("data/zhihu_data.csv")
+          if not csv_path.exists():
+            print("No data/zhihu_data.csv found, skip json export")
+            raise SystemExit(0)
+
+          out_dir = Path("site/data")
+          out_dir.mkdir(parents=True, exist_ok=True)
+
+          df = pd.read_csv(csv_path)
+          out = out_dir / "zhihu_data.json"
+          out.write_text(df.to_json(orient="records", force_ascii=False), encoding="utf-8")
+          print("Wrote", out)
+          PY
+
+      # ✅ 提交并推送到仓库（只提交 site/data/zhihu_data.json）
+      - name: Commit and push updated data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add site/data/zhihu_data.json
+
+          # 没有变化就不提交
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: update zhihu data"
+          git push
