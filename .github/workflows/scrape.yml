@@ -57,8 +57,7 @@ jobs:
         run: |
           python scripts/zhihu.py
 
-      # ✅ 把 CSV 转成网页可用 JSON（推荐提交这个）
-      - name: Convert CSV to website JSON
+      - name: Convert CSV -> JSON in data/
         run: |
           python - << 'PY'
           import pandas as pd
@@ -66,27 +65,23 @@ jobs:
 
           csv_path = Path("data/zhihu_data.csv")
           if not csv_path.exists():
-            print("No data/zhihu_data.csv found, skip json export")
+            print("No data/zhihu_data.csv found. (可能抓取为空/被风控)")
             raise SystemExit(0)
 
-          out_dir = Path("site/data")
-          out_dir.mkdir(parents=True, exist_ok=True)
-
           df = pd.read_csv(csv_path)
-          out = out_dir / "zhihu_data.json"
+          out = Path("data/zhihu_data.json")
           out.write_text(df.to_json(orient="records", force_ascii=False), encoding="utf-8")
           print("Wrote", out)
           PY
 
-      # ✅ 提交并推送到仓库（只提交 site/data/zhihu_data.json）
       - name: Commit and push updated data
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add site/data/zhihu_data.json
+          # 只提交固定文件（避免把一堆 debug/ 增量都推上来）
+          git add data/zhihu_data.csv data/zhihu_data.json || true
 
-          # 没有变化就不提交
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
@@ -94,3 +89,12 @@ jobs:
 
           git commit -m "chore: update zhihu data"
           git push
+
+      - name: Upload artifacts (optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhihu-output
+          path: |
+            data/
+            debug/
+          if-no-files-found: warn
