@@ -33,4 +33,46 @@ jobs:
           import os
           s = os.environ.get("STORAGE_JSON", "")
           if not s.strip():
-            raise
+            raise SystemExit("Missing secret: storage")
+          with open("storage_state.json", "w", encoding="utf-8") as f:
+            f.write(s)
+          print("storage_state.json restored in repo root")
+          PY
+
+      - name: Copy storage_state.json into scripts/ (compat)
+        run: |
+          cp storage_state.json scripts/storage_state.json || true
+
+      - name: Sanity check storage_state.json
+        run: |
+          python - << 'PY'
+          import json
+          with open("storage_state.json","r",encoding="utf-8") as f:
+            d=json.load(f)
+          cookies = d.get("cookies", [])
+          origins = d.get("origins", [])
+          zhihu_cookies = [c for c in cookies if (c.get("domain","").lstrip(".")).endswith("zhihu.com")]
+          print("cookies:", len(cookies))
+          print("origins:", len(origins))
+          print("zhihu cookies:", len(zhihu_cookies))
+          PY
+
+      - name: Run scraper (scripts/zhihu.py)
+        env:
+          KEYWORDS: "王飞跃,自动化学会"
+          MAX_RESULTS_PER_KEYWORD: "30"
+          HEADLESS: "true"
+        run: |
+          python scripts/zhihu.py
+
+      - name: Upload output artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zhihu-output
+          path: |
+            data/
+            debug/
+            scripts/data/
+            scripts/debug/
+            *.csv
+          if-no-files-found: warn
