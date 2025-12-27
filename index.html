@@ -135,7 +135,7 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
       <div class="card" style="margin-bottom: 20px;">
         <div class="flex" style="justify-content: space-between; margin-bottom: 10px;">
            <h3 style="margin:0; font-size:16px;">📊 关键词热度 / 话题分布</h3>
-           <small class="muted">基于 keyword 字段统计</small>
+           <small class="muted">基于抓取次数统计</small>
         </div>
         
         <div style="position: relative; height: 260px; width: 100%;">
@@ -203,7 +203,7 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
   </main>
 
 <script>
-// ==================== 核心逻辑 ====================
+
 
 // 1. 全局变量
 let authorChartInstance = null; // 用于存储 Chart.js 实例
@@ -223,21 +223,17 @@ function parseCSV(text) {
     const line = lines[i].trim();
     if (!line) continue;
     
-    // 处理 CSV 行：这里使用简单的 split，如果字段内容本身包含英文逗号，需要更复杂的正则
-    // 针对本示例数据，内容中多为中文逗号，英文逗号作为分隔符
-    // 为了更健壮，可以使用正则匹配 CSV 字段
+   
     const values = [];
     let match;
     // 匹配双引号内的内容 OR 不包含逗号的内容
     const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
     
-    // 简单的 split 在本场景下可能足够，但为了兼容性：
+    
     const rowData = {};
     const currentLineValues = line.split(','); 
     
-    // 如果分割后的长度大于表头长度，说明内容里有逗号（且没有正确引起来），
-    // 但根据提供的数据样例，我们假设数据格式是规范的或者简单分割即可。
-    // 考虑到 excerpt 可能很长且包含字符，我们做一个简单的映射。
+    
     
     headers.forEach((header, index) => {
       // 移除可能存在的引号
@@ -246,14 +242,9 @@ function parseCSV(text) {
       rowData[header] = val;
     });
 
-    // 稍微修正：如果 split 导致数据错位（例如 excerpt 里有逗号），
-    // 这里的简单 split 会有问题。针对提供的特定数据结构：
-    // keyword,title,excerpt,author,upvotes,comments,url,scraped_at
-    // 如果 excerpt 包含逗号，它会被切分。
-    // 鉴于不能引入库，我们使用一个稍微健壮点的正则 split 方法：
     
     const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-    // 如果正则太复杂，回退到简单 split，因为示例数据看起来是机器生成的标准 CSV
+    
     
     result.push(rowData);
   }
