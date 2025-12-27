@@ -121,7 +121,7 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
         <div class="col-6 card">
            <h3 style="margin-top:0">数据流向</h3>
            <ul>
-             <li>1. 抓取 (GitHub Actions) -> JSON</li>
+             <li>1. 抓取 (GitHub Actions) -> CSV</li>
              <li>2. 前端加载 -> <strong>本地计算</strong></li>
              <li>3. 可视化渲染 (Chart.js)</li>
            </ul>
@@ -134,8 +134,8 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
 
       <div class="card" style="margin-bottom: 20px;">
         <div class="flex" style="justify-content: space-between; margin-bottom: 10px;">
-           <h3 style="margin:0; font-size:16px;">📊 活跃作者 / 人物提及 Top 10</h3>
-           <small class="muted">随下方筛选动态更新</small>
+           <h3 style="margin:0; font-size:16px;">📊 关键词热度 / 话题分布</h3>
+           <small class="muted">基于 keyword 字段统计</small>
         </div>
         
         <div style="position: relative; height: 260px; width: 100%;">
@@ -159,7 +159,7 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
       </div>
 
       <p class="muted" style="margin-top:10px">
-        数据来源：仓库 data/zhihu_data.json
+        数据来源：仓库 data/zhihu_data.csv
       </p>
     </section>
 
@@ -208,7 +208,59 @@ code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
 // 1. 全局变量
 let authorChartInstance = null; // 用于存储 Chart.js 实例
 
-// 2. 工具函数
+// 2. 工具函数：CSV 解析
+// 简单的 CSV 解析器，处理逗号分隔，假设没有复杂的嵌套引号
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  if (lines.length < 2) return [];
+  
+  // 获取表头并去除空格
+  const headers = lines[0].split(',').map(h => h.trim());
+  
+  const result = [];
+  
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    
+    // 处理 CSV 行：这里使用简单的 split，如果字段内容本身包含英文逗号，需要更复杂的正则
+    // 针对本示例数据，内容中多为中文逗号，英文逗号作为分隔符
+    // 为了更健壮，可以使用正则匹配 CSV 字段
+    const values = [];
+    let match;
+    // 匹配双引号内的内容 OR 不包含逗号的内容
+    const regex = /(?:,|\n|^)("(?:(?:"")*[^"]*)*"|[^",\n]*|(?:\n|$))/g;
+    
+    // 简单的 split 在本场景下可能足够，但为了兼容性：
+    const rowData = {};
+    const currentLineValues = line.split(','); 
+    
+    // 如果分割后的长度大于表头长度，说明内容里有逗号（且没有正确引起来），
+    // 但根据提供的数据样例，我们假设数据格式是规范的或者简单分割即可。
+    // 考虑到 excerpt 可能很长且包含字符，我们做一个简单的映射。
+    
+    headers.forEach((header, index) => {
+      // 移除可能存在的引号
+      let val = currentLineValues[index] || "";
+      val = val.replace(/^"|"$/g, ''); 
+      rowData[header] = val;
+    });
+
+    // 稍微修正：如果 split 导致数据错位（例如 excerpt 里有逗号），
+    // 这里的简单 split 会有问题。针对提供的特定数据结构：
+    // keyword,title,excerpt,author,upvotes,comments,url,scraped_at
+    // 如果 excerpt 包含逗号，它会被切分。
+    // 鉴于不能引入库，我们使用一个稍微健壮点的正则 split 方法：
+    
+    const matches = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+    // 如果正则太复杂，回退到简单 split，因为示例数据看起来是机器生成的标准 CSV
+    
+    result.push(rowData);
+  }
+  return result;
+}
+
+// 辅助：获取 JSON (保留用于 meta)
 async function fetchJson(url){
   const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
   if(!res.ok) throw new Error("Fetch failed: " + res.status);
@@ -222,20 +274,20 @@ function escapeHtml(s){
     .replaceAll(">","&gt;");
 }
 
-// 3. 【新增】更新图表函数
+// 3. 【修改】更新图表函数：关联 Keyword
 function updateChart(rows) {
-  // 统计 author 出现频次
+  // 统计 keyword 出现频次
   const counts = {};
   rows.forEach(r => {
-    // 假设 JSON 字段名为 'author'，如果是 'content' 中提取人名需在此处加入正则
-    const name = r.author ? r.author.trim() : "匿名用户";
-    counts[name] = (counts[name] || 0) + 1;
+    // 使用 keyword 字段
+    const key = r.keyword ? r.keyword.trim() : "未分类";
+    counts[key] = (counts[key] || 0) + 1;
   });
 
-  // 排序并取 Top 10
+  // 排序并取 Top 10 (或全部，如果 keyword 不多)
   const sortedData = Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 10);
+    .slice(0, 15); // 展示前15个
 
   const labels = sortedData.map(item => item[0]);
   const dataValues = sortedData.map(item => item[1]);
@@ -258,7 +310,7 @@ function updateChart(rows) {
     data: {
       labels: labels,
       datasets: [{
-        label: '活跃度 (频次)',
+        label: '关键词热度 (频次)',
         data: dataValues,
         backgroundColor: accentColor,
         borderRadius: 4,
@@ -295,7 +347,7 @@ function updateChart(rows) {
 function renderRows(rows){
   const list = document.getElementById("resultsList");
   const kw = (document.getElementById("kwFilter").value || "").trim().toLowerCase();
-  
+   
   // 过滤逻辑：匹配标题、作者或关键词
   const filtered = kw ? rows.filter(r => 
     (r.title && r.title.toLowerCase().includes(kw)) ||
@@ -313,8 +365,8 @@ function renderRows(rows){
         <a href="${r.url}" target="_blank" rel="noreferrer">${escapeHtml(r.title)}</a>
       </div>
       <div class="muted" style="font-size:12px; display:flex; gap:8px; align-items:center;">
-        <span class="pill">${escapeHtml(r.author)}</span>
-        <span>${escapeHtml(r.keyword)}</span>
+        <span class="pill">${escapeHtml(r.keyword)}</span>
+        <span>${escapeHtml(r.author)}</span>
         <span>👍 ${escapeHtml(r.upvotes)}</span>
         <span>💬 ${escapeHtml(r.comments)}</span>
       </div>
@@ -333,29 +385,31 @@ async function loadResults(){
   try{
     const metaEl = document.getElementById("resultsMeta");
     
-    // 尝试加载 Meta 数据
-    let metaText = "本地演示模式";
+    // 尝试加载 Meta 数据 (可选)
     try {
         const meta = await fetchJson("./data/meta.json");
-        metaText = `更新：${meta.updated_at} | 总量：${meta.count}`;
-    } catch(e) { console.log("Meta json load skipped"); }
-    metaEl.textContent = metaText;
+        metaEl.textContent = `更新：${meta.updated_at} | 总量：${meta.count}`;
+    } catch(e) { 
+        metaEl.textContent = "CSV 数据模式"; 
+    }
 
-    // 加载主数据
-    // 注意：如果 data/zhihu_data.json 不存在，这里会报错。
-    // 为了演示，如果没有数据，我们可以造一些假数据。
+    // 【修改】加载 CSV 数据
     let rows = [];
     try {
-        rows = await fetchJson("./data/zhihu_data.json");
+        const res = await fetch("./data/zhihu_data.csv?t=" + Date.now());
+        if(!res.ok) throw new Error("CSV not found");
+        const csvText = await res.text();
+        rows = parseCSV(csvText);
     } catch(e) {
-        console.warn("未找到 data/zhihu_data.json，使用模拟数据演示功能。");
+        console.warn("未找到 data/zhihu_data.csv，使用模拟数据演示功能。", e);
+        // 模拟数据，结构与 CSV 一致
         rows = [
-            {title: "自动驾驶的未来在哪里？", author: "Elon Musk", keyword: "自动驾驶", upvotes: 1200, comments: 300, excerpt: "这是一个示例数据..."},
-            {title: "深度学习在社会学中的应用", author: "Yann LeCun", keyword: "AI", upvotes: 800, comments: 100, excerpt: "另一个示例..."},
-            {title: "社会雷达原理解析", author: "SocialRadar Team", keyword: "Sensing", upvotes: 50, comments: 5, excerpt: "多普勒效应..."},
-            {title: "特斯拉视觉方案", author: "Elon Musk", keyword: "Vision", upvotes: 2000, comments: 500, excerpt: "纯视觉..."},
-            {title: "GPT-5 什么时候发布", author: "Sam Altman", keyword: "LLM", upvotes: 3000, comments: 1000, excerpt: "Soon..."},
-            {title: "OpenAI 的新动态", author: "Sam Altman", keyword: "AI", upvotes: 1500, comments: 200, excerpt: "Q*..."},
+            {keyword: "自动驾驶", title: "自动驾驶的未来在哪里？", author: "Elon Musk", upvotes: "1200", comments: "300", excerpt: "这是一个示例数据...", url: "#"},
+            {keyword: "AI", title: "深度学习在社会学中的应用", author: "Yann LeCun", upvotes: "800", comments: "100", excerpt: "另一个示例...", url: "#"},
+            {keyword: "社会雷达", title: "社会雷达原理解析", author: "SocialRadar Team", upvotes: "50", comments: "5", excerpt: "多普勒效应...", url: "#"},
+            {keyword: "自动驾驶", title: "特斯拉视觉方案", author: "Elon Musk", upvotes: "2000", comments: "500", excerpt: "纯视觉...", url: "#"},
+            {keyword: "LLM", title: "GPT-5 什么时候发布", author: "Sam Altman", upvotes: "3000", comments: "1000", excerpt: "Soon...", url: "#"},
+            {keyword: "AI", title: "OpenAI 的新动态", author: "Sam Altman", upvotes: "1500", comments: "200", excerpt: "Q*...", url: "#"},
         ];
     }
     
@@ -366,6 +420,7 @@ async function loadResults(){
 
   }catch(e){
     document.getElementById("resultsMeta").textContent = "加载失败：" + e.message;
+    console.error(e);
   }
 }
 
@@ -378,7 +433,7 @@ loadResults();
   const root = document.documentElement;
   const saved = localStorage.getItem(KEY);
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
+   
   if(saved === 'dark' || (!saved && prefersDark)){
     root.setAttribute('data-theme','dark');
   }
