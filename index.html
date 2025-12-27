@@ -4,409 +4,260 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>社会雷达 Social Radar</title>
-<meta name="description" content="一个用于展示与原型验证的社会雷达单页站点：数据管道、权重频移计算、可视化与下载。" />
+<meta name="description" content="社会雷达原型：基于多普勒效应的舆论感知与可视化。" />
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"
-        onload="renderMathInElement(document.body,{delimiters:[
-          {left:'$$', right:'$$', display:true},
-          {left:'\\[', right:'\\]', display:true},
-          {left:'$', right:'$', display:false},
-          {left:'\\(', right:'\\)', display:false}
-        ]});"></script>
+        onload="renderMathInElement(document.body,{delimiters:[{left:'$$', right:'$$', display:true},{left:'$', right:'$', display:false}]});"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 :root{
-  --bg:#f9fafb; /* 背景：浅色 */
-  --panel:#ffffff; /* 面板 */
-  --muted:#4b5563; /* 次级文本 */
-  --text:#111827; /* 主文本 */
-  --accent:#0ea5e9; /* 强调色：蓝 */
-  --accent2:#7c3aed; /* 次强调：紫 */
-  --border:#e5e7eb; /* 边框 */
-  --card:#ffffff; /* 卡片底 */
+  --bg:#f9fafb; --panel:#ffffff; --muted:#4b5563; --text:#111827;
+  --accent:#0ea5e9; --border:#e5e7eb; --card:#ffffff;
 }
 *{box-sizing:border-box}
-html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans",sans-serif}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,-apple-system,sans-serif}
 a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline}
-img{max-width:100%;display:block}
 .container{max-width:1080px;margin:0 auto;padding:24px}
 header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:10}
 .nav{display:flex;align-items:center;justify-content:space-between}
-.brand{font-weight:800;letter-spacing:.3px}
+.brand{font-weight:800}
 .menu{display:flex;gap:14px}
-.menu a{padding:10px 12px;border-radius:10px}
-.menu a:hover{background:rgba(0,0,0,.06)}
-.hero{padding:68px 0 28px}
-.hero h1{font-size:40px;margin:8px 0}
-.hero p{color:var(--muted);max-width:760px}
-.btns{display:flex;gap:12px;margin-top:18px;flex-wrap:wrap}
-.btn{display:inline-block;padding:10px 14px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;border:none;cursor:pointer;}
+.menu a{padding:10px 12px;border-radius:10px;color:var(--text)}
+.menu a:hover{background:rgba(0,0,0,.05)}
+.hero{padding:50px 0 30px}
+.hero h1{font-size:36px;margin:10px 0}
+.btn{padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:14px}
 .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
-section{padding:36px 0;border-top:1px solid var(--border)}
-h2{margin:0 0 14px;font-size:22px}
-.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
-.col-6{grid-column:span 6}
-.col-4{grid-column:span 4}
-.col-8{grid-column:span 8}
-.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 3px rgba(0,0,0,0.05)}
-.muted{color:var(--muted)}
-footer{padding:28px 0;color:var(--muted)}
-code,kbd{background:#f3f4f6;color:#1f2937;padding:2px 6px;border-radius:8px}
-.badge{display:inline-block;border:1px solid var(--border);padding:4px 8px;border-radius:999px;color:var(--muted);font-size:12px}
-.pill{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--border);margin-right:6px;font-size:12px;color:var(--accent)}
+section{padding:30px 0;border-top:1px solid var(--border)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,0.03)}
 .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.table{width:100%;border-collapse:collapse;font-size:14px}
-.table th,.table td{border-bottom:1px solid var(--border);padding:8px 6px;text-align:left}
-.drop{border:1px dashed var(--border);border-radius:14px;padding:16px;background:var(--bg)}
+.muted{color:var(--muted)}
+.pill{padding:2px 8px;border-radius:4px;background:var(--bg);border:1px solid var(--border);font-size:12px;color:var(--accent)}
+input{padding:8px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text)}
 
-@media (max-width:900px){.col-6,.col-4,.col-8{grid-column:span 12}.hero{padding-top:48px}.hero h1{font-size:32px}}
-.legend{display:flex;gap:10px;align-items:center}
-.legend span{display:inline-block;width:12px;height:12px;border-radius:3px;background:var(--accent)}
-
-/* 深色主题变量与覆盖 */
+/* 深色模式 */
 [data-theme="dark"]{
-  --bg:#0b1220;
-  --panel:#0e1627;
-  --muted:#93a3b8;
-  --text:#e6eef8;
-  --accent:#38bdf8;
-  --accent2:#a78bfa;
-  --border:#1e293b;
-  --card:#0b1530;
+  --bg:#0b1220; --panel:#0e1627; --muted:#94a3b8; --text:#f1f5f9;
+  --accent:#38bdf8; --border:#1e293b; --card:#0f172a;
 }
-[data-theme="dark"] header{background:rgba(11,18,32,.7)}
-[data-theme="dark"] .menu a:hover{background:rgba(255,255,255,.06)}
+[data-theme="dark"] header{background:rgba(15,23,42,.8)}
 </style>
 </head>
 <body>
 
-  <header>
-    <div class="container nav">
-      <div class="brand">社会雷达 · Social Radar</div>
-      <nav class="menu">
-        <a href="#about">概念</a>
-        <a href="#results">知乎数据</a>
-        <a href="#analyze">CSV分析</a>
-        <a href="#papers">相关论文</a>
-      </nav>
+<header>
+  <div class="container nav">
+    <div class="brand">Social Radar</div>
+    <nav class="menu">
+      <a href="#results">学者分析</a>
+      <a href="#analyze">CSV工具</a>
+      <a href="#papers">论文</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+  <section class="hero">
+    <h1>社会雷达：学者影响力感知</h1>
+    <p class="muted">Social Sensing & Doppler Analysis Prototype</p>
+  </section>
+
+  <section id="results">
+    <div class="flex" style="justify-content:space-between; margin-bottom:15px;">
+      <h2>领域学者 / 活跃人物分析</h2>
+      <input id="kwFilter" placeholder="输入关键词筛选 (如: 自动驾驶)..." style="width:240px">
     </div>
-  </header>
 
-  <main class="container">
-    <section class="hero" id="home">
-      <p class="muted">Social Sensing | Doppler-like Shift | Weighted Signals</p>
-      <h1>社会雷达</h1>
-      <p>
-        本页提供一个可直接部署到 GitHub 的<strong>原型站点</strong>。所有计算均在前端完成。
-      </p>
-      <div class="btns">
-        <a class="btn" href="#results">查看数据</a>
-        <a class="btn secondary" href="#analyze">上传 CSV</a>
+    <div class="card" style="margin-bottom: 20px;">
+      <div style="position: relative; height: 300px; width: 100%;">
+        <canvas id="authorChart"></canvas>
       </div>
-    </section>
+    </div>
 
-    <section id="about">
-      <h2>概念简述</h2>
-      <div class="grid">
-        <div class="col-6 card">
-          <p class="muted">核心思想：</p>
-          <p>社会舆论如同物理波，具备多普勒效应。当群体注意力快速聚焦某一事件时，信号频率发生偏移。</p>
-          <p class="muted">原型公式：</p>$$f_{d,s}=\frac{v_s}{f_0} \cdot \Delta S$$
-        </div>
-        <div class="col-6 card">
-           <h3 style="margin-top:0">数据流向</h3>
-           <ul>
-             <li>1. 抓取 (GitHub Actions) -> JSON</li>
-             <li>2. 前端加载 -> <strong>本地计算</strong></li>
-             <li>3. 可视化渲染 (Chart.js)</li>
-           </ul>
-        </div>
+    <div class="card">
+      <div class="flex" style="justify-content:space-between; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:10px;">
+        <span class="muted" id="resultsMeta">Loading data...</span>
       </div>
-    </section>
+      <div id="resultsList"></div>
+    </div>
+  </section>
 
-    <section id="results">
-      <h2>知乎抓取结果</h2>
-
-      <div class="card" style="margin-bottom: 20px;">
-        <div class="flex" style="justify-content: space-between; margin-bottom: 10px;">
-           <h3 style="margin:0; font-size:16px;">📊 活跃作者 / 人物提及 Top 10</h3>
-           <small class="muted">柱状图随获取数据更新>biao>bi
-        </div>
-        
-        <div style="position: relative; height: 260px; width: 100%;">
-          <canvas id="authorChart"></canvas>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="flex" style="justify-content:space-between;align-items:center">
-          <div class="muted" id="resultsMeta">Loading...</div>
-
-          <input
-            id="kwFilter"
-            placeholder="按关键词过滤（回车生效）"
-            style="padding:8px 10px;border-radius:10px;border:1px solid var(--border);
-                   background:var(--panel);color:var(--text);min-width:220px"
-          />
-        </div>
-
-        <div id="resultsList" style="margin-top:12px">Loading...</div>
-      </div>
-
-      <p class="muted" style="margin-top:10px">
-        数据来源：仓库 data/zhihu_data.json
-      </p>
-    </section>
-
-    <section id="analyze">
-      <h2>CSV 上传与分析</h2>
-      <div class="card">
-        <p class="muted">如果您有自定义的 CSV 数据（格式：timestamp, value, user），可在此上传进行多普勒频移模拟。</p>
-        <div class="drop" id="drop">
-          <input id="file" type="file" accept=".csv" />
-        </div>
-        <canvas id="chart" width="1024" height="300" style="width:100%;margin-top:10px;border:1px solid var(--border);border-radius:12px;background:#f9fafb"></canvas>
-        <div class="flex" style="margin-top:10px">
-          <a id="download" class="btn secondary" href="#" style="padding:8px 12px; display:none">下载结果 CSV</a>
-        </div>
-      </div>
-    </section>
-
-    <section id="papers">
-      <h2>我们的工作</h2>
-      <div class="grid">
-        <div class="col-6 card">
-          <article>
-            <h3 style="margin:0 0 6px">Social Radars for Social Vision</h3>
-            <p class="muted">IEEE Transactions on Intelligent Vehicles</p>
-          </article>
-        </div>
-        <div class="col-6 card">
-          <article>
-            <h3 style="margin:0 0 6px">Social Doppler Framework</h3>
-            <p class="muted">ArXiv Preprint</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      <div class="container">
-        <small class="muted">© 2025 社会雷达 · 研究原型页面。</small>
-      </div>
-    </footer>
-  </main>
+  <section id="analyze">
+    <h2>CSV 频移模拟</h2>
+    <div class="card">
+      <p class="muted">上传自定义数据进行多普勒计算</p>
+      <input id="file" type="file" accept=".csv" style="margin-bottom:10px">
+      <canvas id="chart" width="1024" height="200" style="width:100%; border-radius:8px; background:var(--bg)"></canvas>
+    </div>
+  </section>
+</main>
 
 <script>
-// ==================== 核心逻辑 ====================
+// ================= 全局配置 =================
+let authorChartInstance = null;
 
-// 1. 全局变量
-let authorChartInstance = null; // 用于存储 Chart.js 实例
-
-// 2. 工具函数
+// ================= 数据获取 =================
 async function fetchJson(url){
-  const res = await fetch(url + "?t=" + Date.now(), { cache: "no-store" });
-  if(!res.ok) throw new Error("Fetch failed: " + res.status);
+  const res = await fetch(url + "?t=" + Date.now());
+  if(!res.ok) throw new Error("404");
   return await res.json();
 }
 
-function escapeHtml(s){
-  return (s || "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
-}
+function escapeHtml(s){ return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
 
-// 3. 【新增】更新图表函数
+// ================= 图表核心逻辑 (已修改标签) =================
 function updateChart(rows) {
-  // 统计 author 出现频次
+  // 1. 数据聚合：统计每个学者的出现次数
   const counts = {};
   rows.forEach(r => {
-    // 假设 JSON 字段名为 'author'，如果是 'content' 中提取人名需在此处加入正则
-    const name = r.author ? r.author.trim() : "匿名用户";
+    // 假设 JSON 中的 author 字段就是学者名字
+    // 如果你的数据结构不同，请在这里修改，例如: r.scholar_name
+    const name = r.author ? r.author.trim() : "匿名";
     counts[name] = (counts[name] || 0) + 1;
   });
 
-  // 排序并取 Top 10
+  // 2. 排序：取 Top 12
   const sortedData = Object.entries(counts)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 10);
+    .slice(0, 12);
 
-  const labels = sortedData.map(item => item[0]);
-  const dataValues = sortedData.map(item => item[1]);
+  const labels = sortedData.map(d => d[0]); // 这里就是【学者名字】
+  const values = sortedData.map(d => d[1]);
 
-  // 获取样式变量用于图表配色
+  // 3. 样式读取
   const style = getComputedStyle(document.documentElement);
-  const accentColor = style.getPropertyValue('--accent').trim();
-  const textColor = style.getPropertyValue('--muted').trim();
+  const color = style.getPropertyValue('--accent').trim();
+  const txtColor = style.getPropertyValue('--muted').trim();
 
+  // 4. 渲染图表
   const ctx = document.getElementById('authorChart').getContext('2d');
+  if (authorChartInstance) authorChartInstance.destroy();
 
-  // 如果旧图表存在，销毁它
-  if (authorChartInstance) {
-    authorChartInstance.destroy();
-  }
-
-  // 创建新图表
   authorChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labels,
+      labels: labels, // X轴标签：设置为学者名字
       datasets: [{
-        label: '活跃度 (频次)',
-        data: dataValues,
-        backgroundColor: accentColor,
+        label: '学者产出 / 提及数', // 【修改点】数据集标签
+        data: values,
+        backgroundColor: color,
         borderRadius: 4,
-        barThickness: 'flex',
-        maxBarThickness: 40
+        barPercentage: 0.6
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: false },
+        legend: { display: true, labels: { color: txtColor } }, // 显示图例
         tooltip: {
-          mode: 'index',
-          intersect: false,
+          callbacks: {
+            // 自定义提示框文字
+            title: (items) => `学者：${items[0].label}`,
+            label: (item) => ` 相关动态：${item.raw} 条`
+          }
         }
       },
       scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: style.getPropertyValue('--border').trim() },
-          ticks: { color: textColor, stepSize: 1 }
-        },
         x: {
+          ticks: { color: txtColor, autoSkip: false, maxRotation: 45, minRotation: 0 },
           grid: { display: false },
-          ticks: { color: textColor }
+          title: { // 【修改点】X轴标题
+            display: true,
+            text: '学者姓名',
+            color: txtColor,
+            font: { size: 13, weight: 'bold' }
+          }
+        },
+        y: {
+          ticks: { color: txtColor, stepSize: 1 },
+          grid: { color: style.getPropertyValue('--border').trim() },
+          title: { // 【修改点】Y轴标题
+            display: true,
+            text: '出现频次',
+            color: txtColor
+          }
         }
       }
     }
   });
 }
 
-// 4. 渲染列表与页面主逻辑
+// ================= 列表渲染 =================
 function renderRows(rows){
   const list = document.getElementById("resultsList");
-  const kw = (document.getElementById("kwFilter").value || "").trim().toLowerCase();
+  const kw = document.getElementById("kwFilter").value.trim().toLowerCase();
   
-  // 过滤逻辑：匹配标题、作者或关键词
+  // 筛选逻辑
   const filtered = kw ? rows.filter(r => 
-    (r.title && r.title.toLowerCase().includes(kw)) ||
-    (r.author && r.author.toLowerCase().includes(kw)) ||
-    (r.keyword && r.keyword.toLowerCase().includes(kw))
+    (r.title+r.author+r.keyword).toLowerCase().includes(kw)
   ) : rows;
 
-  // 【重要】更新列表的同时，更新图表
+  // 联动更新图表
   updateChart(filtered);
 
-  // 渲染 HTML 列表
-  list.innerHTML = filtered.slice(0, 50).map(r => `
-    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
-      <div style="font-weight:800;margin-bottom:6px">
-        <a href="${r.url}" target="_blank" rel="noreferrer">${escapeHtml(r.title)}</a>
+  // 渲染列表
+  list.innerHTML = filtered.slice(0, 30).map(r => `
+    <div style="padding:10px 0; border-bottom:1px solid var(--border)">
+      <div style="font-weight:700; margin-bottom:4px">
+        <a href="${r.url}" target="_blank">${escapeHtml(r.title)}</a>
       </div>
-      <div class="muted" style="font-size:12px; display:flex; gap:8px; align-items:center;">
-        <span class="pill">${escapeHtml(r.author)}</span>
-        <span>${escapeHtml(r.keyword)}</span>
-        <span>👍 ${escapeHtml(r.upvotes)}</span>
-        <span>💬 ${escapeHtml(r.comments)}</span>
-      </div>
-      <div style="margin-top:6px;line-height:1.6;font-size:14px;color:var(--text);opacity:0.9">
-        ${escapeHtml(r.excerpt ? r.excerpt.substring(0, 100) + '...' : '')}
+      <div class="muted" style="font-size:12px">
+        <span class="pill" style="margin-right:6px">👤 ${escapeHtml(r.author)}</span>
+        <span>Topic: ${escapeHtml(r.keyword)}</span>
+        <span style="float:right">👍 ${r.upvotes}</span>
       </div>
     </div>
   `).join("");
-
-  if(filtered.length === 0){
-    list.innerHTML = `<div class="muted" style="padding:12px 0">没有匹配的数据</div>`;
-  }
 }
 
-async function loadResults(){
-  try{
-    const metaEl = document.getElementById("resultsMeta");
-    
-    // 尝试加载 Meta 数据
-    let metaText = "本地演示模式";
-    try {
-        const meta = await fetchJson("./data/meta.json");
-        metaText = `更新：${meta.updated_at} | 总量：${meta.count}`;
-    } catch(e) { console.log("Meta json load skipped"); }
-    metaEl.textContent = metaText;
+// ================= 初始化 =================
+async function init(){
+  try {
+    // 模拟数据 (当 fetch 失败时使用)
+    const mockData = [
+      {title:"自动驾驶感知综述", author:"王学者", keyword:"CV", upvotes:200, url:"#"},
+      {title:"大模型在社会学应用", author:"李教授", keyword:"LLM", upvotes:150, url:"#"},
+      {title:"多普勒雷达技术", author:"SocialRadar Team", keyword:"Hardware", upvotes:300, url:"#"},
+      {title:"深度强化学习", author:"张博士", keyword:"RL", upvotes:80, url:"#"},
+      {title:"Transformer 变体研究", author:"王学者", keyword:"NLP", upvotes:120, url:"#"},
+      {title:"智能交通系统", author:"赵研究员", keyword:"ITS", upvotes:90, url:"#"},
+      {title:"生成式 AI 伦理", author:"李教授", keyword:"Ethics", upvotes:210, url:"#"}
+    ];
 
-    // 加载主数据
-    // 注意：如果 data/zhihu_data.json 不存在，这里会报错。
-    // 为了演示，如果没有数据，我们可以造一些假数据。
-    let rows = [];
+    let rows = mockData;
     try {
-        rows = await fetchJson("./data/zhihu_data.json");
-    } catch(e) {
-        console.warn("未找到 data/zhihu_data.json，使用模拟数据演示功能。");
-        rows = [
-            {title: "自动驾驶的未来在哪里？", author: "Elon Musk", keyword: "自动驾驶", upvotes: 1200, comments: 300, excerpt: "这是一个示例数据..."},
-            {title: "深度学习在社会学中的应用", author: "Yann LeCun", keyword: "AI", upvotes: 800, comments: 100, excerpt: "另一个示例..."},
-            {title: "社会雷达原理解析", author: "SocialRadar Team", keyword: "Sensing", upvotes: 50, comments: 5, excerpt: "多普勒效应..."},
-            {title: "特斯拉视觉方案", author: "Elon Musk", keyword: "Vision", upvotes: 2000, comments: 500, excerpt: "纯视觉..."},
-            {title: "GPT-5 什么时候发布", author: "Sam Altman", keyword: "LLM", upvotes: 3000, comments: 1000, excerpt: "Soon..."},
-            {title: "OpenAI 的新动态", author: "Sam Altman", keyword: "AI", upvotes: 1500, comments: 200, excerpt: "Q*..."},
-        ];
-    }
-    
+      const meta = await fetchJson("./data/meta.json");
+      document.getElementById("resultsMeta").textContent = `数据更新于: ${meta.updated_at}`;
+      rows = await fetchJson("./data/zhihu_data.json");
+    } catch(e) { console.log("使用模拟数据..."); }
+
     renderRows(rows);
-
-    // 绑定搜索框事件
-    document.getElementById("kwFilter").addEventListener("input", () => renderRows(rows));
-
-  }catch(e){
-    document.getElementById("resultsMeta").textContent = "加载失败：" + e.message;
-  }
+    document.getElementById("kwFilter").addEventListener("input", ()=>renderRows(rows));
+    
+  } catch(e) { alert("初始化错误"); }
 }
 
-// 启动加载
-loadResults();
-
-// ==================== 主题切换逻辑 ====================
+// 主题切换逻辑
 (function(){
-  const KEY = 'theme';
-  const root = document.documentElement;
-  const saved = localStorage.getItem(KEY);
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
-  if(saved === 'dark' || (!saved && prefersDark)){
-    root.setAttribute('data-theme','dark');
-  }
-
-  // 注入按钮
-  const menu = document.querySelector('nav.menu');
-  if(menu && !document.getElementById('themeToggle')){
-    const btn = document.createElement('button');
-    btn.id = 'themeToggle';
-    btn.className = 'btn secondary';
-    btn.textContent = '🌓';
-    btn.style.marginLeft = '8px';
-    menu.appendChild(btn);
-    
-    btn.addEventListener('click', ()=>{
-      const isDark = root.getAttribute('data-theme') === 'dark';
-      if(isDark){
-        root.removeAttribute('data-theme');
-        localStorage.setItem(KEY,'light');
-      }else{
-        root.setAttribute('data-theme','dark');
-        localStorage.setItem(KEY,'dark');
-      }
-      // 切换主题后重新渲染图表以适配颜色
-      loadResults(); 
-    });
-  }
+  const btn = document.createElement('button');
+  btn.textContent = "🌓";
+  btn.className = "btn secondary";
+  btn.style.marginLeft="10px";
+  btn.onclick = () => {
+    const root = document.documentElement;
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+    init(); // 重新渲染图表颜色
+  };
+  document.querySelector('.menu').appendChild(btn);
 })();
+
+init();
 </script>
 </body>
 </html>
