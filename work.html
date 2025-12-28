@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>我们的工作 - 社会雷达</title>
+
+<style>
+/* === 复用全局样式 === */
+:root{--bg:#f9fafb;--panel:#ffffff;--muted:#4b5563;--text:#111827;--accent:#0ea5e9;--border:#e5e7eb;--card:#ffffff;--code-bg:#f3f4f6;}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font:15px/1.6 system-ui,sans-serif}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+.container{max-width:1080px;margin:0 auto;padding:24px}
+header{position:sticky;top:0;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);z-index:10}
+.nav{display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800;letter-spacing:.3px}
+.menu{display:flex;gap:14px}
+.menu a{padding:10px 12px;border-radius:10px;color:var(--text);text-decoration:none}
+.menu a.active{background:var(--accent);color:#fff}
+.menu a:hover:not(.active){background:rgba(0,0,0,.06)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:24px;margin-bottom:20px}
+.muted{color:var(--muted)}
+h2{margin-top:0}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--border);font-size:12px;color:var(--accent);margin-bottom:8px}
+.btn{display:inline-block;padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;font-weight:600;border:none;cursor:pointer;text-decoration:none;font-size:14px}
+.btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn:hover{text-decoration:none;opacity:0.9}
+.bibtex-box{background:var(--code-bg);padding:12px;border-radius:8px;font-family:monospace;font-size:13px;overflow-x:auto;display:none;margin-top:12px;border:1px solid var(--border)}
+/* 深色模式 */
+[data-theme="dark"]{--bg:#0b1220;--panel:#0e1627;--muted:#93a3b8;--text:#e6eef8;--accent:#38bdf8;--border:#1e293b;--card:#0b1530;--code-bg:#1e293b}
+[data-theme="dark"] header{background:rgba(11,18,32,.7)}
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="container nav">
+      <div class="brand">社会雷达 · Social Radar</div>
+      <nav class="menu">
+        <a href="index.html">概念</a>
+        <a href="data.html">知乎数据</a>
+        <a href="analysis.html">CSV分析</a>
+        <a href="work.html" class="active">我们的工作</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <section style="padding: 40px 0 20px;">
+      <h1>发表论文与研究成果</h1>
+      <p class="muted">我们在社会感知、群体智能与多普勒效应迁移应用方面的最新进展。</p>
+    </section>
+
+    <article class="card">
+      <span class="badge">IEEE Transactions on Intelligent Vehicles (IV)</span>
+      <h2>Social Radars for Social Vision</h2>
+      <p class="muted" style="margin-bottom:16px">Authors: <strong>X. Wang</strong>, Y. Zhang, Z. Li, et al.</p>
+      <p>
+        本文提出了一种基于社会多普勒效应的新型感知框架。通过将物理世界的波传播模型映射到社交网络信息流中，我们实现了对突发社会事件的高灵敏度检测。实验表明，该方法在噪声环境下比传统 NLP 方法具备更强的鲁棒性。
+      </p>
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <a href="#" class="btn">PDF 下载</a>
+        <button class="btn secondary" onclick="toggleBib(1)">引用 (BibTeX)</button>
+        <a href="#" class="btn secondary" target="_blank">代码仓库</a>
+      </div>
+      <div id="bib-1" class="bibtex-box">
+@article{wang2025social,
+  title={Social Radars for Social Vision: A Doppler-based Approach},
+  author={Wang, X. and Zhang, Y. and Li, Z.},
+  journal={IEEE Transactions on Intelligent Vehicles},
+  year={2025},
+  publisher={IEEE}
+}
+      </div>
+    </article>
+
+    <article class="card">
+      <span class="badge">ArXiv Preprint</span>
+      <h2>Social Doppler Framework: Theory and Practice</h2>
+      <p class="muted" style="margin-bottom:16px">Authors: <strong>Research Team</strong></p>
+      <p>
+        深入探讨了信息传播速度 $v_s$ 与群体注意力频率 $f_0$ 之间的数学关系。文章详细推导了权重频移公式，并提供了基于 Python 的开源实现。
+      </p>
+      <div style="margin-top:20px; display:flex; gap:10px;">
+        <a href="#" class="btn">PDF 预览</a>
+        <button class="btn secondary" onclick="toggleBib(2)">引用 (BibTeX)</button>
+      </div>
+      <div id="bib-2" class="bibtex-box">
+@misc{social2024doppler,
+  title={Social Doppler Framework: Theory and Practice},
+  author={Social Radar Team},
+  year={2024},
+  eprint={2401.12345},
+  archivePrefix={arXiv},
+  primaryClass={cs.SI}
+}
+      </div>
+    </article>
+
+  </main>
+
+  <script>
+    function toggleBib(id) {
+      const el = document.getElementById('bib-' + id);
+      el.style.display = el.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // 主题切换逻辑
+    (function(){
+      const root = document.documentElement;
+      const saved = localStorage.getItem('theme');
+      if(saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) root.setAttribute('data-theme','dark');
+      
+      const btn = document.createElement('button');
+      btn.className = 'btn secondary';
+      btn.textContent = '🌓';
+      btn.style.marginLeft = '8px';
+      // 插入到导航栏最后
+      document.querySelector('.menu').appendChild(btn);
+      
+      btn.onclick = () => {
+        const isDark = root.getAttribute('data-theme') === 'dark';
+        root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+      };
+    })();
+  </script>
+</body>
+</html>
