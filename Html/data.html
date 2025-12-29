@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>知乎数据 - 社会雷达</title>
+
+<link rel="stylesheet" href="../CSS/data.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<header>
+  <div class="container nav">
+    <div class="brand">社会雷达 · Social Radar</div>
+    <nav class="menu">
+      <a href="../index.html">首页</a>
+      <a href="data.html" class="active">知乎数据</a>
+      <a href="analysis.html">CSV分析</a>
+      <a href="work.html">我们的工作</a>
+    </nav>
+  </div>
+</header>
+
+<main class="container">
+
+  <div style="margin:24px 0;">
+    <h2>知乎抓取结果</h2>
+    <p class="muted">实时监测的社会舆论关键词热度与分布。</p>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="flex" style="justify-content:space-between;margin-bottom:10px;">
+      <h3 style="margin:0;font-size:16px;">📊 关键词热度分布</h3>
+      <small class="muted">基于 Top 15 抓取频次统计</small>
+    </div>
+    <div style="position:relative;height:300px;width:100%;">
+      <canvas id="authorChart"></canvas>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="flex" style="justify-content:space-between;align-items:center">
+      <div class="muted" id="resultsMeta">Loading...</div>
+      <input
+        id="kwFilter"
+        placeholder="过滤关键词、标题或作者..."
+        style="padding:8px 10px;border-radius:10px;border:1px solid var(--border);
+               background:var(--panel);color:var(--text);min-width:220px"
+      />
+    </div>
+
+    <div id="resultsList" style="margin-top:12px">Loading...</div>
+  </div>
+
+  <p class="muted" style="margin-top:10px;font-size:13px;">
+    数据来源：仓库 data/zhihu_data.csv（模拟模式下为内置数据）
+  </p>
+
+</main>
+
+<script>
+// === 核心逻辑 ===
+
+let authorChartInstance = null;
+
+function parseCSV(text){
+  const lines = text.trim().split('\n');
+  if(lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  const result = [];
+
+  for(let i = 1; i < lines.length; i++){
+    const line = lines[i].trim();
+    if(!line) continue;
+
+    const values = line.split(',');
+    const row = {};
+    headers.forEach((h, idx) => {
+      let v = values[idx] || "";
+      v = v.replace(/^"|"$/g, '');
+      row[h] = v;
+    });
+    result.push(row);
+  }
+  return result;
+}
+
+function escapeHtml(s){
+  return (s || "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+}
+
+// === 图表更新 ===
+function updateChart(rows){
+  const counts = {};
+  rows.forEach(r => {
+    const k = r.keyword ? r.keyword.trim() : "未分类";
+    counts[k] = (counts[k] || 0) + 1;
+  });
+
+  const sorted = Object.entries(counts)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0,15);
+
+  const style = getComputedStyle(document.documentElement);
+  const ctx = document.getElementById("authorChart").getContext("2d");
+
+  if(authorChartInstance) authorChartInstance.destroy();
+
+  authorChartInstance = new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels: sorted.map(i => i[0]),
+      datasets:[{
+        data: sorted.map(i => i[1]),
+        backgroundColor: style.getPropertyValue("--accent").trim(),
+        borderRadius: 4
+      }]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{beginAtZero:true,grid:{color:style.getPropertyValue("--border").trim()}},
+        x:{grid:{display:false}}
+      }
+    }
+  });
+}
+
+// === 列表渲染（标题内嵌链接，点击即可跳转） ===
+function renderRows(rows){
+  const list = document.getElementById("resultsList");
+  const kw = (document.getElementById("kwFilter").value || "").toLowerCase();
+
+  const filtered = kw ? rows.filter(r =>
+    (r.title && r.title.toLowerCase().includes(kw)) ||
+    (r.author && r.author.toLowerCase().includes(kw)) ||
+    (r.keyword && r.keyword.toLowerCase().includes(kw))
+  ) : rows;
+
+  updateChart(filtered);
+
+  if(filtered.length === 0){
+    list.innerHTML = `<div class="muted" style="padding:12px 0">没有匹配的数据</div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.slice(0,50).map(r => `
+    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="font-weight:800;margin-bottom:6px">
+        <a href="${r.url || '#'}" target="_blank" rel="noopener">
+          ${escapeHtml(r.title || '（无标题）')}
+        </a>
+      </div>
+
+      <div class="muted" style="font-size:12px;display:flex;gap:8px;align-items:center;">
+        <span class="pill">${escapeHtml(r.keyword)}</span>
+        <span>${escapeHtml(r.author)}</span>
+        <span>👍 ${escapeHtml(r.upvotes)}</span>
+        <span>💬 ${escapeHtml(r.comments)}</span>
+      </div>
+
+      <div style="margin-top:6px;line-height:1.6;font-size:14px;opacity:.9">
+        ${escapeHtml(r.excerpt ? r.excerpt.substring(0,100) + '...' : '')}
+      </div>
+    </div>
+  `).join("");
+}
+
+// === 数据加载 ===
+async function loadResults(){
+  const meta = document.getElementById("resultsMeta");
+  let rows = [];
+
+  try{
+    const res = await fetch("../data/zhihu_data.csv?t=" + Date.now());
+    if(!res.ok) throw new Error("csv not found");
+    const csv = await res.text();
+    rows = parseCSV(csv);
+    meta.textContent = `共 ${rows.length} 条数据（实时）`;
+  }catch(e){
+    meta.textContent = "演示数据模式";
+    rows = [
+      {keyword:"自动驾驶",title:"自动驾驶的未来在哪里？",author:"Elon Musk",upvotes:"1200",comments:"300",excerpt:"示例数据...",url:"https://www.zhihu.com"},
+      {keyword:"AI",title:"深度学习在社会学中的应用",author:"Yann LeCun",upvotes:"800",comments:"100",excerpt:"AI 发展迅速...",url:"https://www.zhihu.com"},
+      {keyword:"社会雷达",title:"社会雷达原理解析",author:"Team",upvotes:"50",comments:"5",excerpt:"多普勒效应...",url:"https://www.zhihu.com"}
+    ];
+  }
+
+  renderRows(rows);
+  document.getElementById("kwFilter").addEventListener("input", () => renderRows(rows));
+}
+
+loadResults();
+
+// === 主题切换 ===
+(function(){
+  const root = document.documentElement;
+  const saved = localStorage.getItem("theme");
+  if(saved === "dark" || (!saved && window.matchMedia("(prefers-color-scheme: dark)").matches)){
+    root.setAttribute("data-theme","dark");
+  }
+
+  const btn = document.createElement("button");
+  btn.className = "btn secondary";
+  btn.textContent = "🌓";
+  btn.style.marginLeft = "8px";
+
+  btn.onclick = () => {
+    const isDark = root.getAttribute("data-theme") === "dark";
+    root.setAttribute("data-theme", isDark ? "light" : "dark");
+    localStorage.setItem("theme", isDark ? "light" : "dark");
+    loadResults();
+  };
+
+  document.querySelector(".menu").appendChild(btn);
+})();
+</script>
+
+</body>
+</html>
