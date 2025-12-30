@@ -226,7 +226,7 @@ section{
 }
 
 .aqua-btn.outline{
-  border:1px solid rgba(255,255,255,.5);
+  background:#0ea5e9;
   color:#fff;
 }
 
@@ -268,6 +268,7 @@ section{
 [data-theme="dark"] header{
   background:rgba(11,18,32,.7);
 }
+
 /* =========================
    六大核心功能模块
 ========================= */
