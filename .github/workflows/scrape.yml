@@ -3,8 +3,8 @@ name: Zhihu Scrape (Playwright)
 on:
   workflow_dispatch: {}
   # 如果你想定时跑，取消注释并改 cron
-  # schedule:
-  #   - cron: "0 2 * * *"
+  schedule:
+    - cron: "0 8 * * *"
 
 permissions:
   contents: write
