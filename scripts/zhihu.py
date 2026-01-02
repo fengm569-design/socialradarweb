@@ -4,293 +4,200 @@ import time
 import random
 import datetime
 import logging
-from pathlib import Path
+import re
 from typing import List, Dict
 from urllib.parse import quote
 
 import pandas as pd
-from playwright.sync_api import (
-    sync_playwright,
-    Page,
-    TimeoutError as PlaywrightTimeoutError,
-)
+from playwright.sync_api import sync_playwright, Page
 
-# -------------------------
-# Logging
-# -------------------------
+# =========================
+# 日志配置
+# =========================
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
 )
-logger = logging.getLogger("zhihu")
+logger = logging.getLogger(__name__)
 
-# -------------------------
-# Paths (repo-root stable)
-# scripts/zhihu.py -> repo root = parents[1]
-# -------------------------
-SCRIPT_DIR = Path(__file__).resolve().parent
-ROOT_DIR = SCRIPT_DIR.parent
-
-DATA_DIR = ROOT_DIR / "data"
-DEBUG_DIR = ROOT_DIR / "debug"
-
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-DEBUG_DIR.mkdir(parents=True, exist_ok=True)
-
-# 登录态：优先用 repo root 的 storage_state.json；若不存在再用 scripts/storage_state.json
-STATE_ROOT = ROOT_DIR / "storage_state.json"
-STATE_SCRIPTS = SCRIPT_DIR / "storage_state.json"
-
-MAIN_DATA_FILE = DATA_DIR / "zhihu_data.csv"
-
-# -------------------------
-# Config via env
-# -------------------------
-KEYWORDS = os.getenv("KEYWORDS", "王飞跃,自动化学会").replace("，", ",").split(",")
+# =========================
+# 配置区
+# =========================
+# 关键词设置，支持环境变量或默认值
+KEYWORDS = os.getenv("KEYWORDS", "王飞跃,自动化学会,杨孟飞,陈虹,高会军,侯增广,孙彦广,辛景民,阳春华,袁利,张承慧,赵延龙,周杰,陈杰,戴琼海,桂卫华,郭雷,何友,蒋昌俊,李少远,钱锋").replace("，", ",").split(",")
 MAX_RESULTS = int(os.getenv("MAX_RESULTS_PER_KEYWORD", "30"))
-HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
+DATA_DIR = "data"
+STORAGE_STATE_PATH = "storage_state.json"
 
-# Playwright timeouts / retries
-GOTO_TIMEOUT_MS = int(os.getenv("GOTO_TIMEOUT_MS", "180000"))  # 3分钟
-GOTO_RETRIES = int(os.getenv("GOTO_RETRIES", "3"))
-
-
-# -------------------------
-# Helpers
-# -------------------------
-def safe_name(s: str, max_len: int = 20) -> str:
-    s2 = "".join([c for c in s if c.isalnum()])[:max_len]
-    return s2 or "kw"
+OUT_CSV = os.path.join(DATA_DIR, "zhihu_data.csv")
+NEW_CSV = os.path.join(DATA_DIR, "zhihu_data_new.csv")
 
 
-def save_debug(page: Page, prefix: str, reason: str = ""):
-    """保存截图 + HTML，方便定位是否风控/验证码/未登录/DOM变动"""
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    base = f"{prefix}_{ts}"
-    png_path = DEBUG_DIR / f"{base}.png"
-    html_path = DEBUG_DIR / f"{base}.html"
-
-    try:
-        page.screenshot(path=str(png_path), full_page=True)
-    except Exception as e:
-        logger.warning(f"[DEBUG] screenshot failed: {e}")
-
-    try:
-        html = page.content()
-        html_path.write_text(html, encoding="utf-8")
-    except Exception as e:
-        logger.warning(f"[DEBUG] save html failed: {e}")
-
-    logger.warning(f"[DEBUG] Saved debug files: {png_path.name}, {html_path.name}. {reason}")
-
-
-def looks_like_verification_or_login(page: Page) -> bool:
-    """粗略判断：是否遇到登录页/安全验证/验证码/异常访问"""
-    try:
-        title = (page.title() or "").strip()
-    except Exception:
-        title = ""
-
-    try:
-        html = page.content()
-    except Exception:
-        html = ""
-
-    red_flags = [
-        "安全验证",
-        "验证码",
-        "验证",
-        "异常访问",
-        "风险",
-        "robot",
-        "SignFlow",
-        "登录",
-        "signin",
-    ]
-    text = f"{title}\n{html}"
-    return any(flag in text for flag in red_flags)
-
-
+# =========================
+# 行为模拟
+# =========================
 def human_scroll(page: Page, times: int = None):
+    """模拟真人滚动"""
     if times is None:
         times = random.randint(3, 6)
+
     for _ in range(times):
         page.mouse.wheel(0, random.randint(500, 900))
         time.sleep(random.uniform(1.0, 2.5))
 
 
-def load_storage_state_path() -> Path | None:
-    if STATE_ROOT.exists():
-        return STATE_ROOT
-    if STATE_SCRIPTS.exists():
-        return STATE_SCRIPTS
-    return None
+# =========================
+# 工具函数
+# =========================
+def deduplicate_by_url(data: List[Dict]) -> List[Dict]:
+    """根据URL去重"""
+    seen = set()
+    unique_data = []
+
+    for item in data:
+        url = item.get("url")
+        if not url or url in seen:
+            continue
+        seen.add(url)
+        unique_data.append(item)
+
+    return unique_data
 
 
-def goto_with_retry(page: Page, url: str, wait_until: str = "domcontentloaded", prefix: str = "goto") -> bool:
-    """带重试的 goto。最终失败会保存 debug，但不抛异常"""
-    for attempt in range(1, GOTO_RETRIES + 1):
-        try:
-            page.goto(url, wait_until=wait_until, timeout=GOTO_TIMEOUT_MS)
-            return True
-        except PlaywrightTimeoutError:
-            logger.warning(f"[GOTO] Timeout (attempt {attempt}/{GOTO_RETRIES}): {url}")
-            if attempt == GOTO_RETRIES:
-                save_debug(page, f"{prefix}_timeout", reason=f"Final timeout for {url}")
-                return False
-            time.sleep(5 * attempt)
-        except Exception as e:
-            logger.warning(f"[GOTO] Error (attempt {attempt}/{GOTO_RETRIES}): {url} err={e}")
-            if attempt == GOTO_RETRIES:
-                save_debug(page, f"{prefix}_error", reason=f"Final error for {url}: {e}")
-                return False
-            time.sleep(3 * attempt)
-    return False
+def extract_publish_time(card) -> str:
 
+    time_str = ""
 
-# -------------------------
-# Scrape
-# -------------------------
-def scrape_zhihu_keyword(page: Page, keyword: str) -> List[Dict]:
-    results: List[Dict] = []
-    kw = keyword.strip()
-    if not kw:
-        return results
-
-    prefix = safe_name(kw)
-    logger.info(f"开始抓取关键词：{kw}")
-
-    search_url = f"https://www.zhihu.com/search?type=content&q={quote(kw)}"
-    ok = goto_with_retry(page, search_url, wait_until="domcontentloaded", prefix=f"{prefix}_search")
-    if not ok:
-        logger.warning("搜索页无法打开（超时/错误），跳过该关键词。")
-        return []
-
-    time.sleep(2.0)
-    logger.info(f"[DEBUG] search.title={page.title()!r}")
-    logger.info(f"[DEBUG] search.url={page.url!r}")
-
-    # 保存打开后的页面（用于判断风控/验证/结构变化）
-    save_debug(page, f"{prefix}_open", reason="After opening search page")
-
-    # 若明显是验证/登录页，直接返回空（debug 已保存）
-    if looks_like_verification_or_login(page):
-        logger.warning("疑似遇到风控/验证码/未登录页面（见 debug/ 截图与HTML）")
-        return []
-
-    # 等待结果 DOM
     try:
-        page.wait_for_selector(".ContentItem, .SearchResult-Card, .List-item", timeout=15000)
-    except Exception:
-        logger.warning("未检测到搜索结果 DOM（可能DOM变动/被限流），已保存 debug。")
-        save_debug(page, f"{prefix}_noresult", reason="No result DOM found")
+
+        time_el = card.query_selector(".ContentItem-time")
+        if time_el:
+            text = time_el.inner_text().strip()
+            if text:
+                time_str = text
+
+
+        if not time_str:
+            tooltip_el = card.query_selector("span[data-tooltip]")
+            if tooltip_el:
+                tooltip = tooltip_el.get_attribute("data-tooltip")
+                if tooltip:
+                    time_str = tooltip
+
+
+        if not time_str:
+            action_el = card.query_selector(".ContentItem-action")
+            if action_el:
+                text = action_el.inner_text()
+
+                match = re.search(r"(\d{4}-\d{2}-\d{2})", text)
+                if match:
+                    time_str = match.group(1)
+
+    except Exception as e:
+        logger.debug(f"提取时间出错: {e}")
+
+
+    if time_str:
+        time_str = time_str.replace("发布于", "").replace("编辑于", "").strip()
+
+    return time_str
+
+
+# =========================
+# 关键词抓取
+# =========================
+def scrape_zhihu_keyword(page: Page, keyword: str) -> List[Dict]:
+    results = []
+    logger.info(f"开始抓取关键词：{keyword}")
+
+    # 构造搜索 URL
+    search_url = f"https://www.zhihu.com/search?type=content&q={quote(keyword)}"
+    page.goto(search_url, wait_until="domcontentloaded", timeout=60000)
+
+    try:
+        # 等待内容加载
+        page.wait_for_selector(
+            ".ContentItem, .SearchResult-Card, .List-item",
+            timeout=15000
+        )
+    except:
+        logger.warning(f"关键词 {keyword} 未检测到搜索结果 DOM，可能无结果或被限流")
         return []
 
+    # 模拟浏览行为
     time.sleep(random.uniform(2, 4))
-    human_scroll(page, times=4)
+    human_scroll(page, times=5)
 
-    cards = page.query_selector_all(".ContentItem, .SearchResult-Card, .List-item")
-    logger.info(f"关键词「{kw}」抓到 {len(cards)} 个卡片")
-
-    if not cards:
-        save_debug(page, f"{prefix}_emptycards", reason="Selector matched but no cards")
-        return []
+    # 获取所有卡片
+    cards = page.query_selector_all(
+        ".ContentItem, .SearchResult-Card, .List-item"
+    )
+    logger.info(f"关键词「{keyword}」抓到 {len(cards)} 个卡片")
 
     for card in cards[:MAX_RESULTS]:
         try:
-            title_el = card.query_selector("a[href*='/question/'], a[href*='/p/'], a[href]")
+            # 1. 提取标题和链接
+            title_el = card.query_selector("a[href*='/question/'], a[href*='/p/'], a[href*='/zvideo/']")
             if not title_el:
+                # 有些是专栏或话题，结构不同，跳过
                 continue
 
-            title = (title_el.inner_text() or "").strip()
-            url = title_el.get_attribute("href") or ""
-            if not title or not url:
-                continue
+            title = title_el.inner_text().strip()
+            url = title_el.get_attribute("href")
 
+            # 补全 URL
             if url.startswith("//"):
                 url = "https:" + url
             elif url.startswith("/"):
                 url = "https://www.zhihu.com" + url
 
+            # 2. 提取作者
             author_el = card.query_selector(".AuthorInfo-name, .UserLink-link")
-            author = (author_el.inner_text() or "").strip() if author_el else "未知"
+            author = author_el.inner_text().strip() if author_el else "未知"
 
+            # 3. 提取摘要
             excerpt_el = card.query_selector(".RichContent-inner, .ContentItem-excerpt")
-            excerpt = (excerpt_el.inner_text() or "").replace("\n", " ").strip() if excerpt_el else ""
-
-            results.append(
-                {
-                    "keyword": kw,
-                    "title": title,
-                    "author": author,
-                    "url": url,
-                    "excerpt": excerpt[:200],
-                    "scraped_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                }
+            excerpt = (
+                excerpt_el.inner_text().replace("\n", " ").strip()
+                if excerpt_el else ""
             )
-        except Exception:
+
+            # 4. 提取发布时间 (本次修改的核心)
+            publish_time = extract_publish_time(card)
+
+            results.append({
+                "keyword": keyword,
+                "title": title,
+                "author": author,
+                "url": url,
+                "publish_time": publish_time,  # 新增字段
+                "excerpt": excerpt[:200],  # 截取摘要前200字
+                "scraped_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            })
+
+        except Exception as e:
+            logger.debug(f"解析卡片失败：{e}")
             continue
 
     return results
 
 
-# -------------------------
-# Save (dedupe)
-# -------------------------
-def process_and_save_data(new_scraped_data: List[Dict]):
-    if not new_scraped_data:
-        logger.warning("本次未抓取到任何数据，跳过保存。")
-        return
-
-    new_df = pd.DataFrame(new_scraped_data)
-
-    existing_urls = set()
-    if MAIN_DATA_FILE.exists():
-        try:
-            existing_df = pd.read_csv(MAIN_DATA_FILE)
-            if "url" in existing_df.columns:
-                existing_urls = set(existing_df["url"].dropna().tolist())
-        except Exception as e:
-            logger.error(f"读取旧数据失败：{e}（将视为首次运行）")
-
-    new_entries = new_df[~new_df["url"].isin(existing_urls)].drop_duplicates(subset=["url"])
-
-    if new_entries.empty:
-        logger.info("无新增内容（或全部重复）。")
-        return
-
-    write_header = not MAIN_DATA_FILE.exists()
-    new_entries.to_csv(
-        MAIN_DATA_FILE,
-        mode="a",
-        index=False,
-        encoding="utf-8-sig",
-        header=write_header,
-    )
-    logger.info(f"已更新总表：{MAIN_DATA_FILE}")
-
-    current_time_str = datetime.datetime.now().strftime("%Y.%m.%d_%H%M%S")
-    inc_file = DATA_DIR / f"{current_time_str}新增.csv"
-    new_entries.to_csv(inc_file, index=False, encoding="utf-8-sig")
-    logger.info(f"已生成增量：{inc_file}")
-
-
-# -------------------------
-# Main
-# -------------------------
+# =========================
+# 主入口
+# =========================
 def main():
-    all_data: List[Dict] = []
-
-    storage_path = load_storage_state_path()
-    if storage_path:
-        logger.info(f"将使用登录态：{storage_path}")
-    else:
-        logger.warning("未找到 storage_state.json（可能导致未登录/受限）")
+    os.makedirs(DATA_DIR, exist_ok=True)
+    all_data = []
 
     with sync_playwright() as p:
+        # 启动浏览器
         browser = p.chromium.launch(
-            headless=HEADLESS,
-            args=["--no-sandbox", "--disable-blink-features=AutomationControlled"],
+            headless=True,  # 如果需要看浏览器操作，改为 False
+            args=[
+                "--no-sandbox",
+                "--disable-blink-features=AutomationControlled",
+            ],
         )
 
         context_kwargs = {
@@ -302,48 +209,81 @@ def main():
                 "Chrome/119.0.0.0 Safari/537.36"
             ),
         }
-        if storage_path:
-            context_kwargs["storage_state"] = str(storage_path)
+
+        # 如果有登录状态文件，加载它
+        if os.path.exists(STORAGE_STATE_PATH):
+            logger.info("加载已有登录态 storage_state.json")
+            context_kwargs["storage_state"] = STORAGE_STATE_PATH
 
         context = browser.new_context(**context_kwargs)
 
-        # 反检测（不保证绕过风控，但能降低直接识别概率）
-        context.add_init_script(
-            """
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            window.chrome = { runtime: {} };
-            Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
-            Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh', 'en'] });
-            """
-        )
+        # 注入反爬虫绕过脚本
+        context.add_init_script("""
+        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+        window.chrome = { runtime: {} };
+        Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
+        Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN','zh','en'] });
+        """)
 
         page = context.new_page()
 
-        # 访问首页做一次诊断：超时不退出
-        home_url = "https://www.zhihu.com"
-        ok_home = goto_with_retry(page, home_url, wait_until="domcontentloaded", prefix="home")
-        if ok_home:
-            time.sleep(2)
-            save_debug(page, "home_open", reason="Home page check")
-            if looks_like_verification_or_login(page):
-                logger.warning("首页疑似出现登录/验证/风控（见 debug/）。后续搜索很可能无数据。")
-        else:
-            logger.warning("知乎首页在 runner 上无法加载（超时/错误），仍尝试直接抓取搜索页。")
-
-        # 逐关键词抓取
         for kw in KEYWORDS:
             kw = kw.strip()
             if not kw:
                 continue
+
             data = scrape_zhihu_keyword(page, kw)
             all_data.extend(data)
+            # 关键词之间随机等待，防止触发风控
             time.sleep(random.uniform(4, 8))
 
         browser.close()
 
-    process_and_save_data(all_data)
-    logger.info(f"本次抓取完成，条目数：{len(all_data)}")
-    logger.info("如无数据，请下载 artifacts 中的 debug/ 查看返回页面是否为安全验证/登录页。")
+    if not all_data:
+        logger.warning("本次未抓取到任何数据")
+        return
+
+    # 本次运行内部去重
+    all_data = deduplicate_by_url(all_data)
+    df_new = pd.DataFrame(all_data)
+
+    # 打印预览
+    print("\n抓取结果预览:")
+    print(df_new[['title', 'publish_time', 'author']].head())
+
+    # 与历史数据对比 (增量更新)
+    if os.path.exists(OUT_CSV):
+        try:
+            df_old = pd.read_csv(OUT_CSV, encoding="utf-8-sig")
+            old_urls = set(df_old["url"].dropna().tolist())
+            df_increment = df_new[~df_new["url"].isin(old_urls)]
+        except Exception as e:
+            logger.error(f"读取旧数据失败，将全量保存: {e}")
+            df_increment = df_new
+    else:
+        df_increment = df_new
+
+    # 保存新增数据
+    if not df_increment.empty:
+        # 保存本次新增的
+        df_increment.to_csv(
+            NEW_CSV,
+            index=False,
+            encoding="utf-8-sig",
+        )
+        logger.info(f"新增 {len(df_increment)} 条数据 → {NEW_CSV}")
+
+        # 追加写入总表
+        df_increment.to_csv(
+            OUT_CSV,
+            mode="a",
+            index=False,
+            encoding="utf-8-sig",
+            header=not os.path.exists(OUT_CSV),
+        )
+        logger.info(f"已追加到总表 → {OUT_CSV}")
+    else:
+        logger.info("没有发现新增数据")
 
 
 if __name__ == "__main__":
