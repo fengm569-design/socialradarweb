@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
 <title>知乎数据 - 社会雷达</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="../CSS/data.css">
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 
 <body>
@@ -14,203 +13,213 @@
 <header>
   <div class="container nav">
     <div class="brand">社会雷达 · Social Radar</div>
-    <nav class="menu">
-      <a href="../index.html">首页</a>
-      <a href="data.html" class="active">知乎数据</a>
-      <a href="analysis.html">CSV分析</a>
-      <a href="work.html">我们的工作</a>
-    </nav>
+    <div class="menu">
+      <a href="#">首页</a>
+      <a href="#" class="active">知乎数据</a>
+      <a href="#">CSV分析</a>
+      <a href="#">我们的工作</a>
+    </div>
   </div>
 </header>
 
-<main class="container">
+<div class="container">
 
-  <div style="margin:24px 0;">
-    <h2>知乎数据分析</h2>
+  <!-- ===== 总体趋势 ===== -->
+  <div class="card">
+    <h2>全量知乎数据趋势</h2>
+    <div class="charts-wrapper">
+      <div>
+        <h3>总数据趋势（按月）</h3>
+        <div id="global-month" class="chart-container"></div>
+      </div>
+      <div>
+        <h3>最近一周趋势（按日）</h3>
+        <div id="global-week" class="chart-container"></div>
+      </div>
+    </div>
   </div>
 
-  <div id="resultsList"></div>
+  <!-- ===== 人物区域 ===== -->
+  <div id="content-area"></div>
 
-</main>
+</div>
 
 <script>
-/* ================= 工具函数 ================= */
-
-function escapeHtml(s){
-  return (s || "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;");
-}
+const CURRENT_DATE = new Date('2026-01-02');
 
 /* ================= CSV 解析 ================= */
-
 function parseCSV(text){
-  const lines = text.trim().split("\n");
-  if(lines.length < 2) return [];
-  const headers = lines[0].split(",").map(h => h.trim());
-  const rows = [];
-
-  for(let i=1;i<lines.length;i++){
-    const line = lines[i].trim();
-    if(!line) continue;
-    const values = line.split(",");
-    const row = {};
-    headers.forEach((h,idx)=>{
-      let v = values[idx] || "";
-      v = v.replace(/^"|"$/g,"");
-      row[h] = v;
-    });
-    rows.push(row);
-  }
-  return rows;
+  const lines = text.trim().split('\n');
+  return lines.slice(1).map(l=>{
+    const arr = l.split(',');
+    return {
+      keyword: arr[0],
+      title: arr[1],
+      url: arr[3],
+      publish_time: arr[4],
+      excerpt: arr.slice(5, arr.length-1).join(',')
+    };
+  });
 }
 
-/* ================= 按标题去重（仅用于展示列表） ================= */
+/* ================= 数据处理 ================= */
+function buildStats(data){
+  const monthMap = {};
+  const weekMap = {};
+  const weekDays = [];
 
-function dedupeByTitle(rows){
-  const map = new Map();
-  rows.forEach(r=>{
-    if(!map.has(r.title)){
-      map.set(r.title, r);
+  const start = new Date(CURRENT_DATE);
+  start.setDate(start.getDate() - 6);
+
+  for(let i=0;i<7;i++){
+    const d = new Date(start);
+    d.setDate(d.getDate()+i);
+    const k = d.toISOString().slice(0,10);
+    weekDays.push(k);
+    weekMap[k] = 0;
+  }
+
+  data.forEach(d=>{
+    const m = d.publish_time.slice(0,7);
+    monthMap[m] = (monthMap[m]||0)+1;
+
+    if(weekMap[d.publish_time] !== undefined){
+      weekMap[d.publish_time]++;
     }
   });
-  return Array.from(map.values());
-}
-
-/* ================= 按 keyword（姓名）分组 ================= */
-
-function groupByKeyword(rows){
-  const groups = {};
-  rows.forEach(r=>{
-    const name = r.keyword || "未知姓名";
-    if(!groups[name]) groups[name] = [];
-    groups[name].push(r);
-  });
-  return groups;
-}
-
-/* ================= 构建时间序列（不去重） ================= */
-
-function buildTimeSeries(rows){
-  const counter = {};
-  rows.forEach(r=>{
-    if(!r.time) return;
-    counter[r.time] = (counter[r.time] || 0) + 1;
-  });
-
-  const entries = Object.entries(counter)
-    .sort((a,b)=>new Date(a[0]) - new Date(b[0]));
 
   return {
-    labels: entries.map(e=>e[0]),
-    data: entries.map(e=>e[1])
+    monthly: {
+      labels: Object.keys(monthMap).sort(),
+      data: Object.keys(monthMap).sort().map(k=>monthMap[k])
+    },
+    weekly: {
+      labels: weekDays,
+      data: weekDays.map(d=>weekMap[d]),
+      hasData: Object.values(weekMap).some(v=>v>0)
+    }
   };
 }
 
-/* ================= 主渲染 ================= */
+/* ================= 图表绘制 ================= */
+function drawLine(dom, labels, data){
+  const chart = echarts.init(dom);
+  chart.setOption({
+    tooltip:{trigger:'axis'},
+    xAxis:{type:'category',data:labels},
+    yAxis:{type:'value',minInterval:1},
+    series:[{
+      type:'line',
+      data:data,
+      smooth:true,
+      symbolSize:6,
+      areaStyle:{}
+    }]
+  });
+}
 
-function render(rows){
-  const container = document.getElementById("resultsList");
-  container.innerHTML = "";
+function drawWeekly(dom, stats){
+  if(!stats.hasData){
+    dom.innerHTML = '<div class="no-data-msg">一周内暂无新数据</div>';
+    return;
+  }
+  drawLine(dom, stats.labels.map(d=>d.slice(5)), stats.data);
+}
 
-  const groups = groupByKeyword(rows);
+/* ================= 渲染人物 ================= */
+function renderPersons(grouped){
+  const area = document.getElementById('content-area');
+  area.innerHTML = '';
 
-  Object.entries(groups).forEach(([name, allRows], idx)=>{
-    const chartId = `chart-${idx}`;
-    const series = buildTimeSeries(allRows);
+  Object.keys(grouped).forEach(name=>{
+    const personData = grouped[name];
+    const stats = buildStats(personData);
 
-    // ⚠️ 帖子列表只在这里去重
-    const uniqueRows = dedupeByTitle(allRows);
+    // 取前 N 条知乎帖子
+    const showPosts = personData.slice(0, 5);
 
-    const info = allRows[0];
+    let postsHtml = '<ul class="person-post-list">';
+    showPosts.forEach(p=>{
+      postsHtml += `
+        <li>
+          <a href="${p.url}" target="_blank" title="${p.title}">
+            ${p.title}
+          </a>
+          <span class="post-date">${p.publish_time}</span>
+        </li>
+      `;
+    });
+    postsHtml += '</ul>';
 
-    const block = document.createElement("div");
-    block.className = "person-card";
-    block.innerHTML = `
-      <div class="person-left">
-        <div class="person-name">${escapeHtml(name)}</div>
-        <div class="person-org">${escapeHtml(info.org || "")}</div>
-        <img class="person-avatar"
-             src="${info.avatar || "https://via.placeholder.com/200"}">
-      </div>
+    const card = document.createElement('div');
+    card.className = 'person-card';
 
-      <div class="person-right">
-        <canvas id="${chartId}" height="160"></canvas>
+    card.innerHTML = `
+      <div class="person-avatar">${name[0]}</div>
+      <div>
+        <div class="person-name">${name}</div>
 
-        <div class="post-list">
-          ${uniqueRows.slice(0,5).map(r=>`
-            <div class="post-item">
-              <a href="${r.author || "#"}" target="_blank" rel="noopener">
-                ${escapeHtml(r.title || "（无标题）")}
-              </a>
-            </div>
-          `).join("")}
+        <!-- 图表区域 -->
+        <div class="charts-wrapper small">
+          <div>
+            <h4>总趋势</h4>
+            <div class="chart-container" id="m-${name}"></div>
+          </div>
+          <div>
+            <h4>最近趋势</h4>
+            <div class="chart-container" id="w-${name}"></div>
+          </div>
+        </div>
+
+        <!-- 知乎帖子列表 -->
+        <div class="person-posts">
+          <h4>相关知乎帖子</h4>
+          ${postsHtml}
         </div>
       </div>
     `;
 
-    container.appendChild(block);
+    area.appendChild(card);
 
-    const ctx = document.getElementById(chartId).getContext("2d");
-    new Chart(ctx,{
-      type:"line",
-      data:{
-        labels: series.labels,
-        datasets:[{
-          data: series.data,
-          borderColor: getComputedStyle(document.documentElement)
-            .getPropertyValue("--accent").trim(),
-          tension:0.3,
-          fill:false
-        }]
-      },
-      options:{
-        responsive:true,
-        plugins:{legend:{display:false}},
-        scales:{y:{beginAtZero:true}}
-      }
-    });
+    // 绘图
+    drawLine(
+      document.getElementById(`m-${name}`),
+      stats.monthly.labels,
+      stats.monthly.data
+    );
+    drawWeekly(
+      document.getElementById(`w-${name}`),
+      stats.weekly
+    );
   });
 }
 
-/* ================= 数据加载 ================= */
 
-async function loadData(){
-  let rows = [];
-  try{
-    const res = await fetch("../data/zhihu_data.csv?t=" + Date.now());
-    if(!res.ok) throw new Error();
-    rows = parseCSV(await res.text());
-  }catch(e){
-    rows = [
-      {
-        keyword:"Elon Musk",
-        org:"Tesla",
-        title:"自动驾驶的未来在哪里？",
-        time:"2025-01-10",
-        author:"https://www.zhihu.com/people/elon-musk"
-      },
-      {
-        keyword:"Elon Musk",
-        org:"Tesla",
-        title:"自动驾驶的未来在哪里？",
-        time:"2025-01-10",
-        author:"https://www.zhihu.com/people/elon-musk"
-      },
-      {
-        keyword:"Yann LeCun",
-        org:"Meta AI",
-        title:"深度学习的边界",
-        time:"2025-01-12",
-        author:"https://www.zhihu.com/people/yann-lecun"
-      }
-    ];
-  }
-  render(rows);
-}
+/* ================= 主流程 ================= */
+Promise.all([
+  fetch('../data/zhihu_data.csv').then(r=>r.text()),
+  fetch('../data/zhihu_data_new.csv').then(r=>r.text())
+]).then(res=>{
+  const all = [...parseCSV(res[0]), ...parseCSV(res[1])];
 
-loadData();
+  const globalStats = buildStats(all);
+  drawLine(
+    document.getElementById('global-month'),
+    globalStats.monthly.labels,
+    globalStats.monthly.data
+  );
+  drawWeekly(
+    document.getElementById('global-week'),
+    globalStats.weekly
+  );
+
+  const grouped = {};
+  all.forEach(d=>{
+    grouped[d.keyword] ??= [];
+    grouped[d.keyword].push(d);
+  });
+  renderPersons(grouped);
+});
 </script>
 
 </body>
