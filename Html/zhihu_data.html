@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>知乎数据 - 社会雷达</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../CSS/data.css">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var currentUrl = window.location.pathname;  // 获取当前页面路径
+    var menuLinks = document.querySelectorAll('.menu a');  // 获取所有导航链接
+    
+    menuLinks.forEach(function(link) {
+      if (link.href.includes(currentUrl)) {
+        link.classList.add('active');  // 为当前链接添加 active 类
+      } else {
+        link.classList.remove('active');  // 移除其他链接的 active 类
+      }
+    });
+  });
+</script>
+
+<body>
+
+<header>
+  <div class="container nav">
+    <div class="brand">社会雷达 · Social Radar</div>
+    <div class="menu">
+      <a href="../index.html">首页</a>
+      
+      <!-- 下拉菜单容器 -->
+      <div class="dropdown">
+        <a href="javascript:void(0)" class="dropbtn">数据分析</a>
+        <div class="dropdown-content">
+          <a href="zhihu_data.html">知乎</a>
+          <a href="weibo_data.html">微博</a>
+          <a href="news_data.html">小红书</a>
+        </div>
+      </div>
+
+      <a href="analysis.html">CSV分析</a>
+      <a href="work.html">我们的工作</a>
+    </div>
+  </div>
+</header>
+
+
+
+<div class="container">
+
+  <!-- ===== 总体趋势 ===== -->
+  <div class="card">
+    <h2>全量知乎数据趋势</h2>
+    <div class="charts-wrapper">
+      <div>
+        <h3>总数据趋势（按月）</h3>
+        <div id="global-month" class="chart-container"></div>
+      </div>
+      <div>
+        <h3>最近一周趋势（按日）</h3>
+        <div id="global-week" class="chart-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 人物区域 ===== -->
+  <div id="content-area"></div>
+
+</div>
+
+<script>
+const CURRENT_DATE = new Date('2026-01-02');
+
+/* ================= CSV 解析 ================= */
+function parseCSV(text){
+  const lines = text.trim().split('\n');
+  return lines.slice(1).map(l=>{
+    const arr = l.split(',');
+    return {
+      keyword: arr[0],
+      title: arr[1],
+      url: arr[3],
+      publish_time: arr[4],
+      excerpt: arr.slice(5, arr.length-1).join(',')
+    };
+  });
+}
+
+/* ================= 数据处理 ================= */
+function buildStats(data){
+  const monthMap = {};
+  const weekMap = {};
+  const weekDays = [];
+
+  const start = new Date(CURRENT_DATE);
+  start.setDate(start.getDate() - 6);
+
+  for(let i=0;i<7;i++){
+    const d = new Date(start);
+    d.setDate(d.getDate()+i);
+    const k = d.toISOString().slice(0,10);
+    weekDays.push(k);
+    weekMap[k] = 0;
+  }
+
+  data.forEach(d=>{
+    const m = d.publish_time.slice(0,7);
+    monthMap[m] = (monthMap[m]||0)+1;
+
+    if(weekMap[d.publish_time] !== undefined){
+      weekMap[d.publish_time]++;
+    }
+  });
+
+  return {
+    monthly: {
+      labels: Object.keys(monthMap).sort(),
+      data: Object.keys(monthMap).sort().map(k=>monthMap[k])
+    },
+    weekly: {
+      labels: weekDays,
+      data: weekDays.map(d=>weekMap[d]),
+      hasData: Object.values(weekMap).some(v=>v>0)
+    }
+  };
+}
+
+/* ================= 图表绘制 ================= */
+function drawLine(dom, labels, data){
+  const chart = echarts.init(dom);
+  chart.setOption({
+    tooltip:{trigger:'axis'},
+    xAxis:{type:'category',data:labels},
+    yAxis:{type:'value',minInterval:1},
+    series:[{
+      type:'line',
+      data:data,
+      smooth:true,
+      symbolSize:6,
+      areaStyle:{}
+    }]
+  });
+}
+
+function drawWeekly(dom, stats){
+  if(!stats.hasData){
+    dom.innerHTML = '<div class="no-data-msg">一周内暂无新数据</div>';
+    return;
+  }
+  drawLine(dom, stats.labels.map(d=>d.slice(5)), stats.data);
+}
+
+/* ================= 渲染人物 ================= */
+function renderPersons(grouped){
+  const area = document.getElementById('content-area');
+  area.innerHTML = '';
+
+  Object.keys(grouped).forEach(name=>{
+    const personData = grouped[name];
+    const stats = buildStats(personData);
+
+    // 取前 N 条知乎帖子
+    const showPosts = personData.slice(0, 5);
+
+    let postsHtml = '<ul class="person-post-list">';
+    showPosts.forEach(p=>{
+      postsHtml += `
+        <li>
+          <a href="${p.url}" target="_blank" title="${p.title}">
+            ${p.title}
+          </a>
+          <span class="post-date">${p.publish_time}</span>
+        </li>
+      `;
+    });
+    postsHtml += '</ul>';
+
+    const card = document.createElement('div');
+    card.className = 'person-card';
+
+    card.innerHTML = `
+      <div class="person-avatar">${name[0]}</div>
+      <div>
+        <div class="person-name">${name}</div>
+
+        <!-- 图表区域 -->
+        <div class="charts-wrapper small">
+          <div>
+            <h4>总趋势</h4>
+            <div class="chart-container" id="m-${name}"></div>
+          </div>
+          <div>
+            <h4>最近趋势</h4>
+            <div class="chart-container" id="w-${name}"></div>
+          </div>
+        </div>
+
+        <!-- 知乎帖子列表 -->
+        <div class="person-posts">
+          <h4>相关知乎帖子</h4>
+          ${postsHtml}
+        </div>
+      </div>
+    `;
+
+    area.appendChild(card);
+
+    // 绘图
+    drawLine(
+      document.getElementById(`m-${name}`),
+      stats.monthly.labels,
+      stats.monthly.data
+    );
+    drawWeekly(
+      document.getElementById(`w-${name}`),
+      stats.weekly
+    );
+  });
+}
+
+
+/* ================= 主流程 ================= */
+Promise.all([
+  fetch('../data/zhihu_data.csv').then(r=>r.text()),
+  fetch('../data/zhihu_data_new.csv').then(r=>r.text())
+]).then(res=>{
+  const all = [...parseCSV(res[0]), ...parseCSV(res[1])];
+
+  const globalStats = buildStats(all);
+  drawLine(
+    document.getElementById('global-month'),
+    globalStats.monthly.labels,
+    globalStats.monthly.data
+  );
+  drawWeekly(
+    document.getElementById('global-week'),
+    globalStats.weekly
+  );
+
+  const grouped = {};
+  all.forEach(d=>{
+    grouped[d.keyword] ??= [];
+    grouped[d.keyword].push(d);
+  });
+  renderPersons(grouped);
+});
+</script>
+
+</body>
+</html>
