@@ -14,12 +14,22 @@
 <header>
   <div class="container nav">
     <div class="brand">社会雷达 · Social Radar</div>
-    <nav class="menu">
+    <div class="menu">
       <a href="../index.html">首页</a>
-      <a href="zhihu_data.html">知乎数据</a>
+      
+      <!-- 下拉菜单容器 -->
+      <div class="dropdown">
+        <a href="javascript:void(0)" class="dropbtn">数据分析</a>
+        <div class="dropdown-content">
+          <a href="zhihu_data.html">知乎</a>
+          <a href="weibo_data.html">微博</a>
+          <a href="news_data.html">小红书</a>
+        </div>
+      </div>
+
       <a href="analysis.html" class="active">CSV分析</a>
-      <a href="work.html">我们的工作</a>
-    </nav>
+      <a href="work.html" >我们的工作</a>
+    </div>
   </div>
 </header>
 
