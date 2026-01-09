@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # 配置区
 # =========================
 # 关键词设置，支持环境变量或默认值
-KEYWORDS = os.getenv("KEYWORDS", "王飞跃,自动化学会,杨孟飞,陈虹,高会军,侯增广,孙彦广,辛景民,阳春华,袁利,张承慧,赵延龙,周杰,陈杰,戴琼海,桂卫华,郭雷,何友,蒋昌俊,李少远,钱锋").replace("，", ",").split(",")
+KEYWORDS = os.getenv("KEYWORDS", "自动化学会,王飞跃,杨孟飞,郑南宁,张楠,高会军,侯增广,孙彦广,辛景民,阳春华,袁利,张承慧,赵延龙,周杰,陈杰,戴琼海,桂卫华,郭雷,何友,蒋昌俊,李少远,钱锋").replace("，", ",").split(",")
 MAX_RESULTS = int(os.getenv("MAX_RESULTS_PER_KEYWORD", "30"))
 DATA_DIR = "data"
 STORAGE_STATE_PATH = "storage_state.json"
@@ -288,3 +288,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
