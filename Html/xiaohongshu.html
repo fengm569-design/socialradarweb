@@ -2,19 +2,19 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>小红书数据 - 社会雷达</title>
+<title>小红书数据分析 - 社会雷达</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="../CSS/xiaohongshu_data.css">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
+<body>
+
 <script>
-  // 保持原有的导航高亮逻辑
+  // 导航高亮逻辑
   document.addEventListener('DOMContentLoaded', function() {
     var currentUrl = window.location.pathname;
     var menuLinks = document.querySelectorAll('.menu a');
-    
     menuLinks.forEach(function(link) {
-      // 简单的包含判断，防止空链接报错
       if (link.getAttribute('href') && currentUrl.includes(link.getAttribute('href'))) {
         link.classList.add('active');
       } else {
@@ -24,14 +24,11 @@
   });
 </script>
 
-<body>
-
 <header>
   <div class="container nav">
     <div class="brand">社会雷达 · Social Radar</div>
     <div class="menu">
       <a href="../index.html">首页</a>
-      
       <div class="dropdown">
         <a href="javascript:void(0)" class="dropbtn active">数据分析</a>
         <div class="dropdown-content">
@@ -40,7 +37,6 @@
           <a href="xiaohongshu_data.html" class="active">小红书</a>
         </div>
       </div>
-
       <a href="analysis.html">CSV分析</a>
       <a href="work.html">我们的工作</a>
     </div>
@@ -48,69 +44,62 @@
 </header>
 
 <div class="container">
-
-  <div class="card">
-    <h2>全量小红书数据趋势</h2>
-    
-    <div class="summary-bar" style="display:flex; gap:20px; margin-bottom:20px; padding-bottom:10px; border-bottom:1px solid #eee;">
-        <div>笔记总数: <strong id="total-count" style="color:#ff2442">0</strong></div>
-        <div>覆盖博主: <strong id="author-count" style="color:#ff2442">0</strong></div>
-    </div>
-
-    <div class="charts-wrapper">
-      <div>
-        <h3>总数据趋势（按月）</h3>
-        <div id="global-month" class="chart-container"></div>
-      </div>
-      <div>
-        <h3>最近一周趋势（按日）</h3>
-        <div id="global-week" class="chart-container"></div>
-      </div>
+  
+  <div class="card summary-card">
+    <h2>数据概览</h2>
+    <div class="summary-stats">
+        <div class="stat-item">
+            <div class="stat-num" id="total-batches">0</div>
+            <div class="stat-desc">监控话题</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num" id="total-notes">0</div>
+            <div class="stat-desc">笔记总数</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num" id="total-likes">0</div>
+            <div class="stat-desc">总获赞数</div>
+        </div>
     </div>
   </div>
 
-  <div id="content-area"></div>
+  <div class="card">
+      <div class="card-header" style="border-bottom:none; padding-left:0;">
+        <h2 style="margin:0; border-left:4px solid #ff2442; padding-left:10px;">小红书综合热度趋势 (所有话题总和)</h2>
+      </div>
+      <div id="global-trend-chart" style="width: 100%; height: 350px;"></div>
+  </div>
+
+  <div id="content-area">
+    <div class="loading">正在加载数据...</div>
+  </div>
 
 </div>
 
 <script>
-// 设定基准时间，模拟当前系统时间
-const CURRENT_DATE = new Date('2026-01-02');
+const CURRENT_DATE = new Date(); 
 
-/* ================= 工具：日期清洗 ================= */
-// 将 "3小时前" 等相对时间转换为标准 YYYY-MM-DD
+/* ================= 日期清洗 ================= */
 function normalizeDate(dateStr) {
     if (!dateStr) return null;
-    dateStr = dateStr.trim();
-    // 如果已经是标准格式
+    dateStr = dateStr.toString().trim();
     if (dateStr.match(/^\d{4}-\d{2}-\d{2}/)) return dateStr.substring(0, 10);
-
     const now = new Date(CURRENT_DATE);
-    if (dateStr.includes('小时') || dateStr.includes('分钟') || dateStr.includes('刚刚')) {
-        return now.toISOString().slice(0, 10);
-    }
-    if (dateStr.includes('昨天')) {
-        now.setDate(now.getDate() - 1);
-        return now.toISOString().slice(0, 10);
-    }
-    if (dateStr.includes('天前')) {
-        const days = parseInt(dateStr) || 0;
-        now.setDate(now.getDate() - days);
-        return now.toISOString().slice(0, 10);
-    }
-    return null; // 无法解析的日期
+    if (dateStr.includes('小时') || dateStr.includes('分钟') || dateStr.includes('刚刚')) return now.toISOString().slice(0, 10);
+    if (dateStr.includes('昨天')) { now.setDate(now.getDate() - 1); return now.toISOString().slice(0, 10); }
+    if (dateStr.includes('天前')) { const days = parseInt(dateStr)||0; now.setDate(now.getDate() - days); return now.toISOString().slice(0, 10); }
+    if (dateStr.match(/^\d{2}-\d{2}$/)) return now.getFullYear() + '-' + dateStr;
+    return null;
 }
 
 /* ================= CSV 解析 ================= */
-// 相比 split(',')，这个函数能处理标题里自带逗号的情况
 function parseCSVLine(line) {
     const result = [];
     let startValue = 0;
     let inQuotes = false;
     for (let i = 0; i < line.length; i++) {
-        if (line[i] === '"') {
-            inQuotes = !inQuotes;
-        } else if (line[i] === ',' && !inQuotes) {
+        if (line[i] === '"') inQuotes = !inQuotes;
+        else if (line[i] === ',' && !inQuotes) {
             let val = line.substring(startValue, i);
             if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1).replace(/""/g, '"');
             result.push(val);
@@ -124,227 +113,191 @@ function parseCSVLine(line) {
 }
 
 function parseCSV(text){
-  const lines = text.trim().split('\n');
-  // 跳过表头
-  return lines.slice(1).map(l => {
-    // 使用增强版解析
-    const arr = parseCSVLine(l);
-    
-    // 防止空行报错
-    if(arr.length < 5) return null;
-
-    // 清洗日期
-    const cleanDate = normalizeDate(arr[2]);
-    
-    // 映射字段：CSV结构为 [note_id, title, publish_time, author_name, author_id, like_count...]
-    return {
-      note_id: arr[0],
-      title: arr[1] || '无标题',
-      publish_time: cleanDate, // 用于绘图的标准日期
-      display_time: arr[2],    // 用于展示的原始日期文本
-      author_name: arr[3],     // 对应知乎的 keyword
-      like_count: parseInt(arr[5]) || 0,
-      url: arr[10]
-    };
-  }).filter(item => item !== null && item.publish_time !== null);
+    const lines = text.trim().split('\n');
+    return lines.slice(1).map(l => {
+        const arr = parseCSVLine(l);
+        if(arr.length < 5) return null;
+        const rawDate = arr[3];
+        const cleanDate = normalizeDate(rawDate);
+        return {
+            batch_name: arr[0] || '未分类',
+            note_id: arr[1],
+            title: arr[2] || '无标题',
+            publish_time: cleanDate,
+            raw_time: rawDate,
+            author_name: arr[4],
+            like_count: parseInt(arr[6]) || 0,
+            url: arr[11] || '#'
+        };
+    }).filter(d => d !== null && d.publish_time !== null);
 }
 
-/* ================= 数据处理 ================= */
-function buildStats(data){
-  const monthMap = {};
-  const weekMap = {};
-  const weekDays = [];
+/* ================= 核心修改：全局聚合趋势图 ================= */
+function renderGlobalTrendChart(allData) {
+    const dom = document.getElementById('global-trend-chart');
+    if(!dom) return;
 
-  const start = new Date(CURRENT_DATE);
-  start.setDate(start.getDate() - 6);
-
-  // 初始化最近7天
-  for(let i=0; i<7; i++){
-    const d = new Date(start);
-    d.setDate(d.getDate()+i);
-    const k = d.toISOString().slice(0,10);
-    weekDays.push(k);
-    weekMap[k] = 0;
-  }
-
-  data.forEach(d => {
-    // 按月统计 YYYY-MM
-    const m = d.publish_time.slice(0,7);
-    monthMap[m] = (monthMap[m]||0) + 1;
-
-    // 按日统计
-    if(weekMap[d.publish_time] !== undefined){
-      weekMap[d.publish_time]++;
-    }
-  });
-
-  return {
-    monthly: {
-      labels: Object.keys(monthMap).sort(),
-      data: Object.keys(monthMap).sort().map(k => monthMap[k])
-    },
-    weekly: {
-      labels: weekDays,
-      data: weekDays.map(d => weekMap[d]),
-      hasData: Object.values(weekMap).some(v => v > 0)
-    }
-  };
-}
-
-/* ================= 图表绘制 ================= */
-// 增加 color 参数，区分不同平台的主题色（小红书用红色）
-function drawLine(dom, labels, data, color='#ff2442'){
-  if(!dom) return;
-  const chart = echarts.init(dom);
-  chart.setOption({
-    tooltip: { trigger: 'axis' },
-    grid: { top: 30, bottom: 20, left: 40, right: 20, containLabel: true },
-    xAxis: { 
-        type: 'category', 
-        data: labels,
-        axisLine: { lineStyle: { color: '#ddd' } },
-        axisLabel: { color: '#666' }
-    },
-    yAxis: { type: 'value', minInterval: 1 },
-    series: [{
-      type: 'line',
-      data: data,
-      smooth: true,
-      symbolSize: 6,
-      itemStyle: { color: color },
-      areaStyle: {
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-          { offset: 0, color: color.replace('rgb','rgba').replace(')',',0.3)') }, // 简单处理透明度
-          { offset: 1, color: 'rgba(255,255,255,0)' }
-        ])
-      }
-    }]
-  });
-  
-  // 窗口缩放自适应
-  window.addEventListener('resize', () => chart.resize());
-}
-
-function drawWeekly(dom, stats, color='#ff2442'){
-  if(!stats.hasData){
-    dom.innerHTML = '<div class="no-data-msg" style="text-align:center; line-height:200px; color:#999;">暂无本周数据</div>';
-    return;
-  }
-  drawLine(dom, stats.labels.map(d => d.slice(5)), stats.data, color);
-}
-
-/* ================= 渲染人物 ================= */
-function renderPersons(grouped){
-  const area = document.getElementById('content-area');
-  area.innerHTML = '';
-
-  Object.keys(grouped).forEach(name => {
-    const personData = grouped[name];
-    const stats = buildStats(personData);
-    
-    // 计算总点赞，增加数据丰富度
-    const totalLikes = personData.reduce((sum, p) => sum + p.like_count, 0);
-
-    // 取前 5 条
-    const showPosts = personData.slice(0, 5);
-
-    let postsHtml = '<ul class="person-post-list">';
-    showPosts.forEach(p => {
-      postsHtml += `
-        <li>
-          <div style="display:flex; justify-content:space-between;">
-              <a href="${p.url}" target="_blank" title="${p.title}" style="max-width:70%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">
-                ${p.title}
-              </a>
-              <span style="font-size:12px; color:#ff2442;">❤️ ${p.like_count}</span>
-          </div>
-          <span class="post-date" style="display:block; font-size:12px; color:#aaa;">${p.display_time}</span>
-        </li>
-      `;
+    // 1. 聚合所有数据到日期 (不再区分 batch_name)
+    const dateMap = {};
+    allData.forEach(d => {
+        const date = d.publish_time;
+        // 累加当天的所有笔记数量
+        dateMap[date] = (dateMap[date] || 0) + 1;
     });
-    postsHtml += '</ul>';
 
-    const card = document.createElement('div');
-    card.className = 'person-card';
+    // 2. 排序日期
+    const sortedDates = Object.keys(dateMap).sort();
+    const counts = sortedDates.map(d => dateMap[d]);
 
-    // 仿照原有结构，增加博主头像颜色区分
-    card.innerHTML = `
-      <div class="person-header" style="display:flex; align-items:center; margin-bottom:15px; border-bottom:1px solid #f0f0f0; padding-bottom:10px;">
-          <div class="person-avatar" style="background:#ffebee; color:#ff2442;">${name[0]}</div>
-          <div style="margin-left:15px;">
-            <div class="person-name">${name}</div>
-            <div style="font-size:12px; color:#888;">笔记数: ${personData.length} | 总点赞: ${totalLikes}</div>
-          </div>
-      </div>
+    // 3. 绘图
+    const chart = echarts.init(dom);
+    chart.setOption({
+        tooltip: { 
+            trigger: 'axis',
+            formatter: '{b} <br/> 全网总新增: {c} 篇',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            textStyle: { color: '#333' }
+        },
+        grid: { top: 30, left: 20, right: 30, bottom: 20, containLabel: true },
+        xAxis: { 
+            type: 'category', 
+            data: sortedDates, 
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: '#ccc' } }
+        },
+        yAxis: { 
+            type: 'value', 
+            minInterval: 1,
+            splitLine: { lineStyle: { type: 'dashed', color: '#eee' } }
+        },
+        series: [{
+            name: '总热度',
+            type: 'line',
+            data: counts,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: { color: '#ff2442', borderColor: '#fff', borderWidth: 2 },
+            lineStyle: { width: 3, shadowColor: 'rgba(255,36,66,0.3)', shadowBlur: 10 },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(255, 36, 66, 0.3)' },
+                    { offset: 1, color: 'rgba(255, 36, 66, 0.0)' }
+                ])
+            }
+        }]
+    });
 
-      <div class="person-body" style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
-         <div class="charts-wrapper small" style="display:block;">
-            <div style="height:200px; margin-bottom:10px;">
-               <h4 style="margin:0 0 10px 0; font-size:14px; color:#666;">发布热度</h4>
-               <div class="chart-container" id="m-${name}" style="height:160px;"></div>
+    window.addEventListener('resize', () => chart.resize());
+}
+
+/* ================= 单个话题趋势图 ================= */
+function buildTrendStats(data) {
+    const dateMap = {};
+    data.forEach(d => {
+        dateMap[d.publish_time] = (dateMap[d.publish_time] || 0) + 1;
+    });
+    const sortedDates = Object.keys(dateMap).sort();
+    return { dates: sortedDates, counts: sortedDates.map(d => dateMap[d]) };
+}
+
+function drawSmallChart(domId, stats, color) {
+    const dom = document.getElementById(domId);
+    if (!dom || stats.dates.length === 0) {
+        if(dom) dom.innerHTML = '<div class="no-data">暂无数据</div>';
+        return;
+    }
+    const chart = echarts.init(dom);
+    chart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { top: 20, right: 10, bottom: 20, left: 30, containLabel: true },
+        xAxis: { type: 'category', data: stats.dates, axisLine: { lineStyle: { color: '#eee' } } },
+        yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { type: 'dashed', color: '#f5f5f5' } } },
+        series: [{
+            data: stats.counts, type: 'line', smooth: true, symbol: 'none',
+            itemStyle: { color: color },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:color.replace(')',',0.2)').replace('rgb','rgba')},{offset:1,color:'rgba(255,255,255,0)'}])
+            }
+        }]
+    });
+    window.addEventListener('resize', () => chart.resize());
+}
+
+/* ================= 页面渲染主逻辑 ================= */
+function render(groupedData) {
+    const container = document.getElementById('content-area');
+    container.innerHTML = '';
+    const batchNames = Object.keys(groupedData);
+
+    batchNames.forEach((name, index) => {
+        const items = groupedData[name];
+        const totalLikes = items.reduce((sum, item) => sum + item.like_count, 0);
+        const stats = buildTrendStats(items);
+        const topPosts = [...items].sort((a, b) => b.like_count - a.like_count).slice(0, 5);
+
+        let postsHtml = '<ul class="post-list">';
+        topPosts.forEach(p => {
+            postsHtml += `<li>
+                <a href="${p.url}" target="_blank" title="${p.title}">${p.title}</a>
+                <div class="post-meta"><span>❤️ ${p.like_count}</span><span class="date">${p.raw_time}</span></div>
+            </li>`;
+        });
+        postsHtml += '</ul>';
+
+        const chartId = `chart-${index}`;
+        const card = document.createElement('div');
+        card.className = 'topic-card';
+        card.innerHTML = `
+            <div class="card-header">
+                <div class="topic-title"><span class="icon">#</span> ${name}</div>
+                <div class="topic-stats">
+                    <span class="badge">笔记: ${items.length}</span>
+                    <span class="badge red">获赞: ${totalLikes}</span>
+                </div>
             </div>
-         </div>
-
-         <div class="person-posts">
-            <h4 style="margin:0 0 10px 0; font-size:14px; color:#666;">热门/最新笔记</h4>
-            ${postsHtml}
-         </div>
-      </div>
-    `;
-
-    area.appendChild(card);
-
-    // 绘图
-    drawLine(
-      document.getElementById(`m-${name}`),
-      stats.monthly.labels,
-      stats.monthly.data
-    );
-  });
+            <div class="card-body">
+                <div class="chart-section">
+                    <h4>话题热度趋势 (篇/天)</h4>
+                    <div id="${chartId}" class="chart-box"></div>
+                </div>
+                <div class="list-section">
+                    <h4>精选热门笔记</h4>
+                    ${postsHtml}
+                </div>
+            </div>`;
+        container.appendChild(card);
+        setTimeout(() => drawSmallChart(chartId, stats, '#ff2442'), 0);
+    });
 }
 
-/* ================= 主流程 ================= */
-// 读取小红书数据
+/* ================= 入口 ================= */
 fetch('../data/xiaohongshu_data.csv')
-  .then(r => r.text())
-  .then(text => {
-    const all = parseCSV(text);
+    .then(r => r.text())
+    .then(text => {
+        const data = parseCSV(text);
+        
+        // 1. 更新顶部数字
+        document.getElementById('total-notes').innerText = data.length;
+        document.getElementById('total-likes').innerText = data.reduce((s, d) => s + d.like_count, 0);
 
-    // 更新顶部数字
-    document.getElementById('total-count').innerText = all.length;
-    
-    // 1. 全局图表
-    const globalStats = buildStats(all);
-    drawLine(
-      document.getElementById('global-month'),
-      globalStats.monthly.labels,
-      globalStats.monthly.data
-    );
-    drawWeekly(
-      document.getElementById('global-week'),
-      globalStats.weekly
-    );
+        // 2. 绘制全网大图 (聚合模式)
+        renderGlobalTrendChart(data);
 
-    // 2. 按博主分组 (author_name 替代 keyword)
-    const grouped = {};
-    all.forEach(d => {
-      // 过滤掉空的作者名
-      const key = d.author_name || '未知用户';
-      grouped[key] ??= [];
-      grouped[key].push(d);
+        // 3. 分组并渲染卡片
+        const grouped = {};
+        data.forEach(d => {
+            if (!grouped[d.batch_name]) grouped[d.batch_name] = [];
+            grouped[d.batch_name].push(d);
+        });
+        document.getElementById('total-batches').innerText = Object.keys(grouped).length;
+        render(grouped);
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById('content-area').innerHTML = '<div style="text-align:center;padding:50px;color:red;">数据加载失败，请检查文件路径或跨域设置。</div>';
     });
-    
-    document.getElementById('author-count').innerText = Object.keys(grouped).length;
-
-    // 3. 渲染
-    renderPersons(grouped);
-  })
-  .catch(err => {
-      console.error(err);
-      document.getElementById('content-area').innerHTML = '<p style="color:red; text-align:center;">数据加载失败，请检查文件路径或服务器设置。</p>';
-  });
 
 </script>
-
 </body>
 </html>
