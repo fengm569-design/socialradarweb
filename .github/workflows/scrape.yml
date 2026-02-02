@@ -11,6 +11,14 @@ permissions:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    env:
+      # ✅ 统一关键词：爬虫抓取 + meta.json 生成 共用这一份
+      KEYWORDS: "自动化学会,王飞跃,杨孟飞,郑南宁,张楠,高会军,侯增广,孙彦广,辛景民,阳春华,袁利,张承慧,赵延龙,周杰,陈杰,戴琼海,桂卫华,郭雷,何友,蒋昌俊,李少远,钱锋"
+      # ✅ 爬虫参数（所有 step 可读；主要给 Run scraper 用）
+      MAX_RESULTS_PER_KEYWORD: "30"
+      HEADLESS: "true"
+      GOTO_TIMEOUT_MS: "180000"
+      GOTO_RETRIES: "3"
 
     steps:
       - name: Checkout repo
@@ -56,18 +64,11 @@ jobs:
           cp storage_state.json scripts/storage_state.json || true
 
       - name: Run scraper (scripts/zhihu.py)
-        env:
-          KEYWORDS: "王飞跃,自动化学会"
-          MAX_RESULTS_PER_KEYWORD: "30"
-          HEADLESS: "true"
-          GOTO_TIMEOUT_MS: "180000"
-          GOTO_RETRIES: "3"
         run: |
-          python scripts/zhihu.py
+          echo "KEYWORDS=$KEYWORDS"
+          python -u scripts/zhihu.py
 
       - name: Build data/zhihu_data.json and data/meta.json for website
-        env:
-          KEYWORDS: "自动化学会,王飞跃,杨孟飞,郑南宁,张楠,高会军,侯增广,孙彦广,辛景民,阳春华,袁利,张承慧,赵延龙,周杰,陈杰,戴琼海,桂卫华,郭雷,何友,蒋昌俊,李少远,钱锋"
         run: |
           python - << 'PY'
           import json, os
