@@ -67,7 +67,7 @@ jobs:
 
       - name: Build data/zhihu_data.json and data/meta.json for website
         env:
-          KEYWORDS: "王飞跃,自动化学会"
+          KEYWORDS: "自动化学会,王飞跃,杨孟飞,郑南宁,张楠,高会军,侯增广,孙彦广,辛景民,阳春华,袁利,张承慧,赵延龙,周杰,陈杰,戴琼海,桂卫华,郭雷,何友,蒋昌俊,李少远,钱锋"
         run: |
           python - << 'PY'
           import json, os
