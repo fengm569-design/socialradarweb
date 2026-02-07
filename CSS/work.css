@@ -3,41 +3,43 @@
     /* 浅色模式 */
     --primary: #0084ff;       /* 主题蓝 */
     --primary-hover: #0073e0;
-    --bg-body: #f6f8fa;
+    --accent: #ff2442;        /* 强调色 */
+    --bg-body: #f8f9fa;
     --bg-card: #ffffff;
-    --text-main: #121212;
-    --text-sub: #646464;
-    --border: #ebebeb;
-    --shadow: 0 2px 8px rgba(0,0,0,0.04);
-    --shadow-hover: 0 8px 16px rgba(0,0,0,0.08);
+    --text-main: #333333;
+    --text-sub: #666666;
+    --border: #e0e0e0;
+    --shadow: 0 4px 20px rgba(0,0,0,0.05);
+    --shadow-hover: 0 10px 30px rgba(0,0,0,0.1);
     
     /* 标签颜色 */
-    --tag-journal-bg: #e5f2ff;
+    --tag-journal-bg: rgba(0, 132, 255, 0.1);
     --tag-journal-text: #0084ff;
-    --tag-preprint-bg: #fff0e6;
-    --tag-preprint-text: #ff8200;
+    --tag-preprint-bg: rgba(255, 36, 66, 0.1);
+    --tag-preprint-text: #ff2442;
 
-    --code-bg: #f8f9fa;
+    --code-bg: #f4f6f8;
 }
 
 /* 深色模式变量覆盖 */
 [data-theme='dark'] {
     --primary: #3b9eff;
     --primary-hover: #66b5ff;
-    --bg-body: #121212;
-    --bg-card: #1e1e1e;
+    --accent: #ff6b81;
+    --bg-body: #1a1a1a;
+    --bg-card: #2d2d2d;
     --text-main: #e0e0e0;
     --text-sub: #a0a0a0;
-    --border: #333333;
-    --shadow: 0 2px 8px rgba(0,0,0,0.2);
-    --shadow-hover: 0 8px 16px rgba(0,0,0,0.4);
+    --border: #444444;
+    --shadow: 0 4px 20px rgba(0,0,0,0.3);
+    --shadow-hover: 0 10px 30px rgba(0,0,0,0.5);
     
-    --tag-journal-bg: rgba(0, 132, 255, 0.15);
+    --tag-journal-bg: rgba(59, 158, 255, 0.15);
     --tag-journal-text: #66b5ff;
-    --tag-preprint-bg: rgba(255, 130, 0, 0.15);
-    --tag-preprint-text: #ffaa4d;
+    --tag-preprint-bg: rgba(255, 107, 129, 0.15);
+    --tag-preprint-text: #ff6b81;
 
-    --code-bg: #2d2d2d;
+    --code-bg: #222222;
 }
 
 /* ================= 基础重置 ================= */
@@ -72,6 +74,7 @@ header {
 .menu a {
     font-size: 15px; color: var(--text-sub); font-weight: 500;
     position: relative; padding: 5px 0;
+    transition: color 0.2s;
 }
 .menu a:hover, .menu a.active { color: var(--primary); }
 .menu a.active::after {
@@ -85,13 +88,19 @@ header {
     display: none; position: absolute; top: 100%; left: 50%;
     transform: translateX(-50%); background: var(--bg-card);
     min-width: 140px; box-shadow: var(--shadow-hover);
-    border-radius: 6px; padding: 8px 0; border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 0; border: 1px solid var(--border);
+    overflow: hidden;
 }
-.dropdown:hover .dropdown-content { display: block; }
+.dropdown:hover .dropdown-content { display: block; animation: fadeIn 0.2s; }
 .dropdown-content a {
-    display: block; padding: 8px 20px; color: var(--text-main);
+    display: block; padding: 8px 20px; color: var(--text-main); font-size: 14px;
 }
 .dropdown-content a:hover { background: var(--bg-body); color: var(--primary); }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
 
 /* 主题切换按钮 */
 .btn-icon {
@@ -99,110 +108,324 @@ header {
     padding: 8px; border-radius: 50%; display: flex; align-items: center;
 }
 .btn-icon:hover { background: var(--border); color: var(--text-main); }
-/* 控制图标显示：默认显示月亮，深色模式显示太阳 */
 .icon-sun { display: none; }
 .icon-moon { display: block; }
 [data-theme='dark'] .icon-sun { display: block; }
 [data-theme='dark'] .icon-moon { display: none; }
 
 /* ================= 页面头部 ================= */
-.page-header { padding: 50px 0 30px; text-align: center; }
-.page-header h1 { font-size: 32px; font-weight: 800; margin: 0 0 10px; }
-.subtitle { font-size: 16px; color: var(--text-sub); margin: 0; max-width: 600px; margin: 0 auto; }
+.page-header { padding: 60px 0 40px; text-align: center; }
+.page-header h1 { 
+    font-size: 2.5rem; font-weight: 800; margin: 0 0 12px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.subtitle { font-size: 1.1rem; color: var(--text-sub); margin: 0 auto; max-width: 600px; }
 
-/* ================= 论文卡片 ================= */
-.paper-card {
-    background: var(--bg-card);
-    border-radius: 12px;
-    padding: 30px;
-    margin-bottom: 30px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-    overflow: hidden;
+/* ================= 1. 科研架构图 (Hierarchy Map) ================= */
+.roadmap-section {
+    margin-bottom: 60px;
+    overflow-x: auto; /* 支持移动端横滑 */
+    padding: 20px 0;
+    text-align: center;
+    -webkit-overflow-scrolling: touch;
 }
 
-/* 增加左侧装饰条，增加学术感 */
+.roadmap-tree {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    min-width: 600px; /* 保证图形不挤压 */
+}
+
+/* 节点通用样式 */
+.node {
+    background: var(--bg-card);
+    border: 2px solid var(--border);
+    padding: 10px 24px;
+    border-radius: 50px;
+    box-shadow: var(--shadow);
+    font-weight: bold;
+    font-size: 14px;
+    position: relative;
+    transition: all 0.3s;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-main);
+    cursor: default;
+}
+.node:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.node.root {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    font-size: 16px;
+    padding: 14px 32px;
+}
+
+/* 连接线系统 */
+.level-1 {
+    margin-bottom: 40px;
+    position: relative;
+}
+.level-1::after { /* 根节点向下的竖线 */
+    content: '';
+    position: absolute;
+    bottom: -42px; /* 稍微延伸一点覆盖横线 */
+    left: 50%;
+    width: 2px;
+    height: 42px;
+    background: var(--border);
+    transform: translateX(-50%);
+}
+
+.level-2-container {
+    display: flex;
+    justify-content: center;
+    gap: 60px;
+    position: relative;
+}
+/* 横向总线 */
+.level-2-container::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 20%; 
+    right: 20%;
+    height: 2px;
+    background: var(--border);
+}
+
+.branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    flex: 1;
+}
+/* 分支向上的竖线 */
+.branch::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    width: 2px;
+    height: 20px;
+    background: var(--border);
+    transform: translateX(-50%);
+}
+/* 分支向下的虚线指向内容 */
+.branch::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 2px;
+    height: 40px;
+    /* 虚线效果 */
+    background: repeating-linear-gradient(to bottom, var(--border) 0, var(--border) 4px, transparent 4px, transparent 8px);
+    transform: translateX(-50%);
+    opacity: 0.6;
+}
+
+/* ================= 2. 论文列表 (Timeline Style) ================= */
+.papers-container {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+    padding-left: 30px;
+}
+/* 左侧时间轴线 */
+.papers-container::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20px;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+}
+
+.paper-card {
+    background: var(--bg-card);
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 40px;
+    box-shadow: var(--shadow);
+    border: 1px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+/* 时间轴圆点 */
 .paper-card::before {
     content: '';
-    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
-    background: var(--primary);
-    opacity: 0.8;
+    position: absolute;
+    left: -37px;
+    top: 32px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 3px solid var(--primary);
+    z-index: 1;
+    box-shadow: 0 0 0 6px var(--bg-body); /* 制造间隔感 */
 }
 
 .paper-card:hover {
-    transform: translateY(-2px);
+    transform: translateY(-5px);
+    border-color: rgba(0, 132, 255, 0.2);
     box-shadow: var(--shadow-hover);
 }
 
 .paper-meta {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
 }
 
-/* 标签样式 */
+/* 标签样式统一 */
 .badge {
-    display: inline-block; padding: 4px 10px; border-radius: 6px;
-    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 .badge.journal { background: var(--tag-journal-bg); color: var(--tag-journal-text); }
 .badge.preprint { background: var(--tag-preprint-bg); color: var(--tag-preprint-text); }
 
-.paper-date { font-size: 14px; color: var(--text-sub); font-family: monospace; }
+.paper-date {
+    font-size: 14px;
+    color: var(--text-sub);
+    margin-left: auto;
+    font-family: 'SF Mono', 'Menlo', monospace;
+    opacity: 0.8;
+}
 
 .paper-title {
-    font-size: 22px; margin: 0 0 10px; color: var(--text-main); line-height: 1.3;
+    font-size: 1.5rem;
+    margin: 0 0 12px 0;
+    line-height: 1.35;
+    color: var(--text-main);
+    font-weight: 700;
 }
 
 .paper-authors {
-    color: var(--text-sub); font-size: 15px; margin-bottom: 15px;
+    color: var(--text-sub);
+    font-size: 0.95rem;
+    margin-bottom: 20px;
+    font-style: italic;
+    line-height: 1.6;
 }
-.paper-authors strong { color: var(--text-main); }
+.paper-authors strong {
+    color: var(--text-main);
+    font-weight: 600;
+    border-bottom: 1px dashed var(--border);
+}
 
 .paper-abstract {
-    color: var(--text-main); opacity: 0.9; margin-bottom: 25px;
-    font-size: 15px; text-align: justify;
+    background: rgba(0,0,0,0.02);
+    padding: 16px 20px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-main);
+    border-left: 4px solid var(--primary);
+    margin-bottom: 24px;
 }
 
 /* 按钮组 */
-.paper-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.paper-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500;
-    transition: all 0.2s; cursor: pointer; border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid transparent;
+    font-weight: 600;
 }
 .btn-primary {
-    background: var(--primary); color: #fff; border-color: var(--primary);
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 132, 255, 0.2);
 }
-.btn-primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); }
+.btn-primary:hover { 
+    background: var(--primary-hover); 
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 132, 255, 0.3);
+}
 
 .btn-secondary {
-    background: transparent; color: var(--text-sub); border-color: var(--border);
+    background: transparent;
+    border-color: var(--border);
+    color: var(--text-sub);
 }
 .btn-secondary:hover {
-    border-color: var(--text-sub); color: var(--text-main); background: var(--bg-body);
+    border-color: var(--text-main);
+    color: var(--text-main);
+    background: rgba(0,0,0,0.03);
 }
 
-/* BibTeX 代码块 */
+/* BibTeX 盒子动画 */
 .bibtex-box {
-    display: none; /* 默认隐藏 */
-    margin-top: 20px; padding: 15px;
-    background: var(--code-bg); border-radius: 6px;
+    margin-top: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin-top 0.4s;
+    background: var(--code-bg);
+    color: var(--text-sub);
+    border-radius: 8px;
     border: 1px solid var(--border);
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-    font-size: 13px; color: var(--text-sub); overflow-x: auto;
+    position: relative;
 }
-.bibtex-box.active { display: block; animation: slideDown 0.3s ease; }
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+.bibtex-box.active {
+    max-height: 400px;
+    margin-top: 20px;
+}
+.bibtex-box pre {
+    padding: 20px;
+    margin: 0;
+    font-size: 13px;
+    overflow-x: auto;
+    font-family: 'Consolas', 'Monaco', monospace;
+    white-space: pre-wrap;
 }
 
-@media (max-width: 600px) {
-    .page-header h1 { font-size: 26px; }
+/* 响应式调整 */
+@media (max-width: 768px) {
+    /* 移动端隐藏部分连接线 */
+    .level-2-container { flex-direction: column; align-items: center; gap: 30px; }
+    .level-2-container::before { display: none; }
+    .branch::before { display: none; }
+    .level-1::after { height: 30px; }
+    
+    /* 列表调整 */
+    .papers-container { padding-left: 15px; }
+    .papers-container::before { left: 0; }
+    .paper-card::before { left: -21px; width: 10px; height: 10px; top: 28px; }
     .paper-card { padding: 20px; }
-    .paper-actions { width: 100%; }
-    .btn { flex: 1; justify-content: center; }
+    .paper-title { font-size: 1.25rem; }
+    .btn { width: 100%; justify-content: center; }
 }
