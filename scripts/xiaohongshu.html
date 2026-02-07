@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>小红书数据分析 - 社会雷达</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../CSS/xiaohongshu_data.css">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+</head>
+<body>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var currentUrl = window.location.pathname;
+    var menuLinks = document.querySelectorAll('.menu a');
+    menuLinks.forEach(function(link) {
+      if (link.getAttribute('href') && currentUrl.includes(link.getAttribute('href'))) {
+        link.classList.add('active');
+      } else {
+        link.classList.remove('active');
+      }
+    });
+  });
+</script>
+
+<header>
+  <div class="container nav">
+    <div class="brand">社会雷达 · Social Radar</div>
+    <div class="menu">
+      <a href="../index.html">首页</a>
+      <div class="dropdown">
+        <a href="javascript:void(0)" class="dropbtn active">数据分析</a>
+        <div class="dropdown-content">
+          <a href="zhihu_data.html">知乎</a>
+          <a href="weibo_data.html">微信公众号</a>
+          <a href="xiaohongshu_data.html" class="active">小红书</a>
+        </div>
+      </div>
+      <a href="analysis.html">CSV分析</a>
+      <a href="work.html">我们的工作</a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+  
+  <div class="card summary-card">
+    <h2>数据概览</h2>
+    <div class="summary-stats">
+        <div class="stat-item">
+            <div class="stat-num" id="total-batches">0</div>
+            <div class="stat-desc">监控话题</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num" id="total-notes">0</div>
+            <div class="stat-desc">笔记总数</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-num" id="total-likes">0</div>
+            <div class="stat-desc">总获赞数</div>
+        </div>
+    </div>
+  </div>
+
+  <div class="card">
+      <div class="card-header" style="border-bottom:none; padding-left:0;">
+        <h2 style="margin:0; border-left:4px solid #ff2442; padding-left:10px;">小红书综合热度趋势 (所有话题总和)</h2>
+      </div>
+      <div id="global-trend-chart" style="width: 100%; height: 350px;"></div>
+  </div>
+
+  <div class="card" style="margin: 20px 0; padding: 15px; display: flex; align-items: center; gap: 15px; background: #fff0f0; border: 1px solid #ffcccc;">
+      <h3 style="margin: 0; font-size: 16px; color: #333;">🔍 数据筛选：</h3>
+      <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+          <input type="checkbox" id="negative-filter" onchange="toggleFilter()">
+          <span style="color: #d32f2f; font-weight: bold;">只看“避雷/吐槽”内容</span>
+      </label>
+      <span style="color: #888; font-size: 12px;">(关键词：避雷, 踩坑, 失望, 拔草, 差评, 吐槽, 无语, 后悔...)</span>
+  </div>
+
+  <div id="content-area">
+    <div class="loading">正在加载数据...</div>
+  </div>
+
+</div>
+
+<script>
+const CURRENT_DATE = new Date(); 
+
+// 定义小红书特有的负面关键词
+const NEGATIVE_KEYWORDS = ["避雷", "踩坑", "失望", "差评", "吐槽", "黑榜", "垃圾", "无语", "别去", "别买", "后悔", "上当", "拔草", "劝退", "恶心", "不行", "烂", "智商税"];
+
+// 全局数据
+let GLOBAL_ALL_DATA = [];
+
+/* ================= 筛选逻辑 ================= */
+function toggleFilter() {
+    const isFilterOn = document.getElementById('negative-filter').checked;
+    const area = document.getElementById('content-area');
+    
+    // 重新分组
+    const grouped = {};
+    let filteredCount = 0;
+
+    GLOBAL_ALL_DATA.forEach(d => {
+        // 筛选逻辑
+        if (isFilterOn) {
+            const textToCheck = d.title.toLowerCase();
+            const hasNegativeWord = NEGATIVE_KEYWORDS.some(kw => textToCheck.includes(kw));
+            if (!hasNegativeWord) return;
+        }
+
+        if (!grouped[d.batch_name]) grouped[d.batch_name] = [];
+        grouped[d.batch_name].push(d);
+        filteredCount++;
+    });
+
+    // 如果筛选后没数据
+    if (Object.keys(grouped).length === 0) {
+        area.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">没有找到符合条件的负面内容</div>';
+        document.getElementById('total-notes').innerText = filteredCount + (isFilterOn ? " (筛选后)" : "");
+        return;
+    }
+
+    // 更新统计数字
+    document.getElementById('total-notes').innerText = filteredCount + (isFilterOn ? " (筛选后)" : "");
+    document.getElementById('total-batches').innerText = Object.keys(grouped).length;
+
+    // 重新渲染列表
+    render(grouped);
+}
+
+function normalizeDate(dateStr) {
+    if (!dateStr) return null;
+    dateStr = dateStr.toString().trim();
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}/)) return dateStr.substring(0, 10);
+    const now = new Date(CURRENT_DATE);
+    if (dateStr.includes('小时') || dateStr.includes('分钟') || dateStr.includes('刚刚')) return now.toISOString().slice(0, 10);
+    if (dateStr.includes('昨天')) { now.setDate(now.getDate() - 1); return now.toISOString().slice(0, 10); }
+    if (dateStr.includes('天前')) { const days = parseInt(dateStr)||0; now.setDate(now.getDate() - days); return now.toISOString().slice(0, 10); }
+    if (dateStr.match(/^\d{2}-\d{2}$/)) return now.getFullYear() + '-' + dateStr;
+    return null;
+}
+
+/* ================= CSV 解析 ================= */
+function parseCSVLine(line) {
+    const result = [];
+    let startValue = 0;
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+        if (line[i] === '"') inQuotes = !inQuotes;
+        else if (line[i] === ',' && !inQuotes) {
+            let val = line.substring(startValue, i);
+            if (val.startsWith('"') && val.endsWith('"')) val = val.slice(1, -1).replace(/""/g, '"');
+            result.push(val);
+            startValue = i + 1;
+        }
+    }
+    let lastVal = line.substring(startValue);
+    if (lastVal.startsWith('"') && lastVal.endsWith('"')) lastVal = lastVal.slice(1, -1).replace(/""/g, '"');
+    result.push(lastVal);
+    return result;
+}
+
+function parseCSV(text){
+    const lines = text.trim().split('\n');
+    return lines.slice(1).map(l => {
+        const arr = parseCSVLine(l);
+        if(arr.length < 5) return null;
+        const rawDate = arr[3];
+        const cleanDate = normalizeDate(rawDate);
+        return {
+            batch_name: arr[0] || '未分类',
+            note_id: arr[1],
+            title: arr[2] || '无标题',
+            publish_time: cleanDate,
+            raw_time: rawDate,
+            author_name: arr[4],
+            like_count: parseInt(arr[6]) || 0,
+            url: arr[11] || '#'
+        };
+    }).filter(d => d !== null && d.publish_time !== null);
+}
+
+/* ================= 全局趋势图 ================= */
+function renderGlobalTrendChart(allData) {
+    const dom = document.getElementById('global-trend-chart');
+    if(!dom) return;
+
+    const dateMap = {};
+    allData.forEach(d => {
+        const date = d.publish_time;
+        dateMap[date] = (dateMap[date] || 0) + 1;
+    });
+
+    const sortedDates = Object.keys(dateMap).sort();
+    const counts = sortedDates.map(d => dateMap[d]);
+
+    const chart = echarts.init(dom);
+    chart.setOption({
+        tooltip: { 
+            trigger: 'axis',
+            formatter: '{b} <br/> 全网总新增: {c} 篇',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            textStyle: { color: '#333' }
+        },
+        grid: { top: 30, left: 20, right: 30, bottom: 20, containLabel: true },
+        xAxis: { 
+            type: 'category', 
+            data: sortedDates, 
+            boundaryGap: false,
+            axisLine: { lineStyle: { color: '#ccc' } }
+        },
+        yAxis: { 
+            type: 'value', 
+            minInterval: 1,
+            splitLine: { lineStyle: { type: 'dashed', color: '#eee' } }
+        },
+        series: [{
+            name: '总热度',
+            type: 'line',
+            data: counts,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 8,
+            itemStyle: { color: '#ff2442', borderColor: '#fff', borderWidth: 2 },
+            lineStyle: { width: 3, shadowColor: 'rgba(255,36,66,0.3)', shadowBlur: 10 },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                    { offset: 0, color: 'rgba(255, 36, 66, 0.3)' },
+                    { offset: 1, color: 'rgba(255, 36, 66, 0.0)' }
+                ])
+            }
+        }]
+    });
+
+    window.addEventListener('resize', () => chart.resize());
+}
+
+/* ================= 单个话题趋势图 ================= */
+function buildTrendStats(data) {
+    const dateMap = {};
+    data.forEach(d => {
+        dateMap[d.publish_time] = (dateMap[d.publish_time] || 0) + 1;
+    });
+    const sortedDates = Object.keys(dateMap).sort();
+    return { dates: sortedDates, counts: sortedDates.map(d => dateMap[d]) };
+}
+
+function drawSmallChart(domId, stats, color) {
+    const dom = document.getElementById(domId);
+    if (!dom || stats.dates.length === 0) {
+        if(dom) dom.innerHTML = '<div class="no-data">暂无数据</div>';
+        return;
+    }
+    const chart = echarts.init(dom);
+    chart.setOption({
+        tooltip: { trigger: 'axis' },
+        grid: { top: 20, right: 10, bottom: 20, left: 30, containLabel: true },
+        xAxis: { type: 'category', data: stats.dates, axisLine: { lineStyle: { color: '#eee' } } },
+        yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { type: 'dashed', color: '#f5f5f5' } } },
+        series: [{
+            data: stats.counts, type: 'line', smooth: true, symbol: 'none',
+            itemStyle: { color: color },
+            areaStyle: {
+                color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:color.replace(')',',0.2)').replace('rgb','rgba')},{offset:1,color:'rgba(255,255,255,0)'}])
+            }
+        }]
+    });
+    window.addEventListener('resize', () => chart.resize());
+}
+
+/* ================= 页面渲染主逻辑 ================= */
+function render(groupedData) {
+    const container = document.getElementById('content-area');
+    container.innerHTML = '';
+    const isFilterOn = document.getElementById('negative-filter').checked;
+    const batchNames = Object.keys(groupedData);
+
+    batchNames.forEach((name, index) => {
+        const items = groupedData[name];
+        const totalLikes = items.reduce((sum, item) => sum + item.like_count, 0);
+        const stats = buildTrendStats(items);
+        
+        // 按发布时间倒序排列 (最新的在最前)
+        const topPosts = [...items].sort((a, b) => {
+            return new Date(b.publish_time) - new Date(a.publish_time);
+        }).slice(0, 5); 
+
+        let postsHtml = '<ul class="post-list">';
+        topPosts.forEach(p => {
+            // 高亮处理
+            let displayTitle = p.title;
+            if (isFilterOn) {
+                NEGATIVE_KEYWORDS.forEach(kw => {
+                    displayTitle = displayTitle.replace(new RegExp(kw, 'g'), `<span style="color:#d32f2f;background:#ffebee;padding:0 2px;">${kw}</span>`);
+                });
+            }
+
+            postsHtml += `<li>
+                <a href="${p.url}" target="_blank" title="${p.title}">${displayTitle}</a>
+                <div class="post-meta"><span>❤️ ${p.like_count}</span><span class="date">${p.raw_time}</span></div>
+            </li>`;
+        });
+        postsHtml += '</ul>';
+
+        const chartId = `chart-${index}`;
+        const card = document.createElement('div');
+        card.className = 'topic-card';
+        card.innerHTML = `
+            <div class="card-header">
+                <div class="topic-title"><span class="icon">#</span> ${name}</div>
+                <div class="topic-stats">
+                    <span class="badge">笔记: ${items.length}</span>
+                    <span class="badge red">获赞: ${totalLikes}</span>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-section">
+                    <h4>话题热度趋势 (篇/天)</h4>
+                    <div id="${chartId}" class="chart-box"></div>
+                </div>
+                <div class="list-section">
+                    <h4>最新动态 ${isFilterOn ? '(负面)' : '(按时间)'}</h4>
+                    ${postsHtml}
+                </div>
+            </div>`;
+        container.appendChild(card);
+        setTimeout(() => drawSmallChart(chartId, stats, '#ff2442'), 0);
+    });
+}
+
+/* ================= 入口 ================= */
+fetch('../data/xiaohongshu_data.csv')
+    .then(r => r.text())
+    .then(text => {
+        const data = parseCSV(text);
+        
+        // 保存到全局变量，供筛选使用
+        GLOBAL_ALL_DATA = data;
+        
+        document.getElementById('total-notes').innerText = data.length;
+        document.getElementById('total-likes').innerText = data.reduce((s, d) => s + d.like_count, 0);
+
+        renderGlobalTrendChart(data);
+
+        // 初始分组
+        const grouped = {};
+        data.forEach(d => {
+            if (!grouped[d.batch_name]) grouped[d.batch_name] = [];
+            grouped[d.batch_name].push(d);
+        });
+        
+        document.getElementById('total-batches').innerText = Object.keys(grouped).length;
+        render(grouped);
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById('content-area').innerHTML = '<div style="text-align:center;padding:50px;color:red;">数据加载失败，请检查文件路径或跨域设置。</div>';
+    });
+</script>
+</body>
+</html>
