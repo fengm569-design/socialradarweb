@@ -58,6 +58,15 @@
     </div>
   </div>
 
+  <div class="card" style="margin: 20px 0; padding: 15px; display: flex; align-items: center; gap: 15px; background: #f9f9f9; border: 1px solid #eee;">
+      <h3 style="margin: 0; font-size: 16px;">🔍 数据筛选：</h3>
+      <label style="cursor: pointer; display: flex; align-items: center; gap: 5px;">
+          <input type="checkbox" id="negative-filter" onchange="toggleFilter()">
+          <span style="color: #d32f2f; font-weight: bold;">只看“负面/争议”内容</span>
+      </label>
+      <span style="color: #999; font-size: 12px;">(关键词：避雷, 踩坑, 甚至, 失望, 差评, 吐槽, 质疑, 骗子...)</span>
+  </div>
+
   <div id="content-area"></div>
 
 </div>
@@ -77,8 +86,50 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 const CURRENT_DATE = new Date('2026-01-02');
+// 定义负面关键词
+const NEGATIVE_KEYWORDS = ["避雷", "踩坑", "甚至", "失望", "差评", "吐槽", "黑榜", "垃圾", "无语", "别去", "别买", "后悔", "上当", "质疑", "骗子", "恶心", "不行", "烂"];
 
+// 全局数据
+let GLOBAL_ALL_DATA = [];
 
+/* ================= 筛选逻辑 ================= */
+function toggleFilter() {
+    const isFilterOn = document.getElementById('negative-filter').checked;
+    const area = document.getElementById('content-area');
+    
+    // 重新分组
+    const grouped = {};
+    let filteredCount = 0;
+
+    GLOBAL_ALL_DATA.forEach(d => {
+        // 筛选逻辑
+        if (isFilterOn) {
+            // 检查标题或摘要中是否包含负面词
+            const textToCheck = (d.title + d.excerpt).toLowerCase();
+            const hasNegativeWord = NEGATIVE_KEYWORDS.some(kw => textToCheck.includes(kw));
+            if (!hasNegativeWord) return;
+        }
+
+        grouped[d.keyword] = grouped[d.keyword] || [];
+        grouped[d.keyword].push(d);
+        filteredCount++;
+    });
+
+    // 如果筛选后没数据
+    if (Object.keys(grouped).length === 0) {
+        area.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">没有找到符合条件的负面内容</div>';
+        document.getElementById('total-posts').innerText = filteredCount + (isFilterOn ? " (筛选后)" : "");
+        document.getElementById('total-people').innerText = 0;
+        return;
+    }
+
+    // 更新统计数字
+    document.getElementById('total-posts').innerText = filteredCount + (isFilterOn ? " (筛选后)" : "");
+    document.getElementById('total-people').innerText = Object.keys(grouped).length;
+
+    // 重新渲染列表
+    renderPersons(grouped);
+}
 
 function parseCSVLine(line) {
     const result = [];
@@ -112,7 +163,6 @@ function parseCSV(text){
             title: arr[1] || '无标题',
             url: arr[3],
             publish_time: arr[4],
-            
             excerpt: arr.slice(5).join(',').substring(0, 100) + '...'
         };
     }).filter(item => item !== null && item.keyword);
@@ -137,11 +187,9 @@ function buildStats(data){
     data.forEach(d => {
         if(!d.publish_time) return;
         
-        // 月度
         const m = d.publish_time.slice(0,7);
         monthMap[m] = (monthMap[m]||0)+1;
 
-        // 周度
         const day = d.publish_time.slice(0,10);
         if(weekMap[day] !== undefined){
             weekMap[day]++;
@@ -161,7 +209,6 @@ function buildStats(data){
     };
 }
 
-/* ================= 绘图函数 ================= */
 function drawLine(dom, labels, data, color='#0084ff'){
     if(!dom) return;
     const chart = echarts.init(dom);
@@ -188,13 +235,12 @@ function drawLine(dom, labels, data, color='#0084ff'){
             itemStyle: { color: color },
             areaStyle: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: color.replace(')', ', 0.2)').replace('rgb', 'rgba') }, // 自动处理透明度
+                    { offset: 0, color: color.replace(')', ', 0.2)').replace('rgb', 'rgba') },
                     { offset: 1, color: 'rgba(255, 255, 255, 0)' }
                 ])
             }
         }]
     });
-   
     window.addEventListener('resize', () => chart.resize());
 }
 
@@ -206,22 +252,35 @@ function drawWeekly(dom, stats){
     drawLine(dom, stats.labels.map(d => d.slice(5)), stats.data, '#0084ff');
 }
 
-
 function renderPersons(grouped){
     const area = document.getElementById('content-area');
     area.innerHTML = '';
+    const isFilterOn = document.getElementById('negative-filter').checked;
 
     Object.keys(grouped).forEach((name, index) => {
         const personData = grouped[name];
         const stats = buildStats(personData);
-        const showPosts = personData.slice(0, 5); // 取前5条
+        
+        // 按时间倒序
+        const sortedPosts = [...personData].sort((a, b) => {
+            return new Date(b.publish_time) - new Date(a.publish_time);
+        });
+        
+        const showPosts = sortedPosts.slice(0, 5); 
 
         let postsHtml = '<ul class="person-post-list">';
         showPosts.forEach(p => {
+            let displayTitle = p.title;
+            if (isFilterOn) {
+                NEGATIVE_KEYWORDS.forEach(kw => {
+                    displayTitle = displayTitle.replace(new RegExp(kw, 'g'), `<span style="color:#d32f2f;background:#ffebee;padding:0 2px;">${kw}</span>`);
+                });
+            }
+
             postsHtml += `
                 <li>
                     <a href="${p.url}" target="_blank" title="${p.title}">
-                        ${p.title}
+                        ${displayTitle}
                     </a>
                     <span class="post-date">${p.publish_time}</span>
                 </li>
@@ -231,8 +290,6 @@ function renderPersons(grouped){
 
         const card = document.createElement('div');
         card.className = 'person-card';
-
-        // 动态ID
         const mChartId = `m-${index}`;
         const wChartId = `w-${index}`;
 
@@ -258,14 +315,13 @@ function renderPersons(grouped){
                 </div>
 
                 <div class="person-posts">
-                    <h4>📝 精选知乎回答/文章</h4>
+                    <h4>📝 精选知乎回答/文章 ${isFilterOn ? '(最新负面)' : '(最新)'}</h4>
                     ${postsHtml}
                 </div>
             </div>
         `;
 
         area.appendChild(card);
-
         
         setTimeout(() => {
             drawLine(document.getElementById(mChartId), stats.monthly.labels, stats.monthly.data, '#0084ff');
@@ -280,7 +336,26 @@ Promise.all([
 ]).then(res => {
     document.getElementById('loading').style.display = 'none';
 
-    const all = [...parseCSV(res[0]), ...parseCSV(res[1])];
+    // 1. 合并原始数据
+    const rawList = [...parseCSV(res[0]), ...parseCSV(res[1])];
+    
+    // 2. 核心修改：去重逻辑 (Keyword + URL)
+    const uniqueMap = new Map();
+    const all = [];
+
+    rawList.forEach(item => {
+        // 使用 关键词 + URL 作为唯一标识
+        // 这样可以去除同一关键词下的重复文章，但保留同一文章在不同关键词下的引用
+        const uniqueKey = `${item.keyword}_${item.url || item.title}`;
+        
+        if (!uniqueMap.has(uniqueKey)) {
+            uniqueMap.set(uniqueKey, true);
+            all.push(item);
+        }
+    });
+
+    // 3. 后续处理使用去重后的数据 'all'
+    GLOBAL_ALL_DATA = all;
 
     document.getElementById('total-posts').innerText = all.length;
     
