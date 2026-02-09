@@ -1,0 +1,47 @@
+name: scheduled-crawl
+
+on:
+  schedule:
+    # GitHub Actions 的 cron 用 UTC
+    # 下面是每天 UTC 00:05 运行（新加坡时间 +8 => 08:05 运行）
+    - cron: "5 0 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scheduled-crawl
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run crawler
+        env:
+          COZE_API_TOKEN: ${{ secrets.COZE_API_TOKEN }}
+        run: |
+          python scripts/xiaohongshu.py
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # 只提交有变化时，避免空提交
+          if git status --porcelain | grep -qE "(\.csv|/data/)"; then
+            git add -A
+            git commit -m "chore: update crawl data"
+            git push
+          else
+            echo "No data changes to commit."
+          fi
