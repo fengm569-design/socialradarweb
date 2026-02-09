@@ -7,7 +7,10 @@ from cozepy import Coze, TokenAuth, Stream, WorkflowEvent, WorkflowEventType, CO
 
 # ================= 配置区 =================
 # 1. 您的新 Token
-COZE_API_TOKEN = 'cztei_h8iJmS2fEHmXbRZHuqMuQs1vv1GAWMdN6dttpON1e70vpPSATJMcHhavYMAVINIr3'
+# COZE_API_TOKEN = 'cztei_h8iJmS2fEHmXbRZHuqMuQs1vv1GAWMdN6dttpON1e70vpPSATJMcHhavYMAVINIr3'
+COZE_API_TOKEN = os.getenv("COZE_API_TOKEN", "")
+if not COZE_API_TOKEN:
+    raise RuntimeError("Missing COZE_API_TOKEN env var")
 
 # 2. 您的工作流 ID
 WORKFLOW_ID = '7603685878149660718'
@@ -151,4 +154,5 @@ def main():
 
 
 if __name__ == "__main__":
+
     main()
