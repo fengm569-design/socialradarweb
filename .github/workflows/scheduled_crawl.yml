@@ -35,7 +35,7 @@ jobs:
         env:
           COZE_API_TOKEN: ${{ secrets.COZE_API_TOKEN }}
         run: |
-          python path/to/your_script.py
+          python scripts/xiaohongshu.py
 
       - name: Commit and push if changed
         run: |
