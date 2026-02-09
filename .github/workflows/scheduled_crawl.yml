@@ -4,7 +4,7 @@ on:
   schedule:
     # GitHub Actions 的 cron 用 UTC
     # 下面是每天 UTC 00:05 运行（新加坡时间 +8 => 08:05 运行）
-    - cron: "5 0 * * *"
+    - cron: "0 0 * * *"
   workflow_dispatch: {}
 
 permissions:
