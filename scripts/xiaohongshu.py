@@ -8,7 +8,7 @@ from cozepy import Coze, TokenAuth, Stream, WorkflowEvent, WorkflowEventType, CO
 # ================= 配置区 =================
 # 1. 您的新 Token
 # COZE_API_TOKEN = 'cztei_hvuxQnBDZ2SiXsPdaHV4v1vSfgIWAPWRTL07REEUxeq13x3zXsANnu5ccWwZitS7O'
-COZE_API_TOKEN = os.getenv("COZE_API_TOKEN", "")
+COZE_API_TOKEN = os.getenv("COZE_API_TOKEN", "").strip()
 if not COZE_API_TOKEN:
     raise RuntimeError("Missing COZE_API_TOKEN env var")
 
@@ -158,4 +158,5 @@ if __name__ == "__main__":
     main()
 print("TOKEN exists:", bool(COZE_API_TOKEN))
 print("TOKEN prefix:", COZE_API_TOKEN[:6] if COZE_API_TOKEN else "None")
+
 
