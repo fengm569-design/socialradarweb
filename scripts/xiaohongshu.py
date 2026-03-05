@@ -156,4 +156,6 @@ def main():
 if __name__ == "__main__":
 
     main()
+print("TOKEN exists:", bool(COZE_API_TOKEN))
+print("TOKEN prefix:", COZE_API_TOKEN[:6] if COZE_API_TOKEN else "None")
 
