@@ -1,0 +1,49 @@
+name: Generate Academic Report
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 每天北京时间 / 新加坡时间 08:00 运行
+    # GitHub Actions 的 schedule 使用 UTC
+    - cron: '0 0 * * *'
+
+jobs:
+  generate-report:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas
+
+      - name: Run report script
+        run: |
+          python scripts/generate_academic_report.py
+
+      - name: Commit and push result
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add data/academic_summary.json
+
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "auto: update academic summary"
+            git push
+          fi
