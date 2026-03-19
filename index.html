@@ -9,190 +9,137 @@
 
 <body>
 
-<header>
-  <div class="container nav">
-    <div class="brand">社会雷达 · Social Radar</div>
-    <nav class="menu">
-      <a href="index.html" class="active">首页</a>
-      <div class="dropdown">
-        <a href="javascript:void(0)" class="dropbtn">数据分析</a>
-        <div class="dropdown-content">
-          <a href="Html/zhihu_data.html">知乎</a>
-          <a href="Html/weibo_data.html">微信公众号</a>
-          <a href="Html/xiaohongshu.html">小红书</a>
+  <header id="common-header"></header>
+
+  <main>
+    <section class="hero-section">
+      <div class="container hero-wrapper">
+        <div class="hero-text">
+           <h1>洞察社会脉搏<br><span>构建全域舆情感知雷达</span></h1>
+           <div class="hero-subtitle">
+             基于多普勒效应模型的舆情风险预警系统。实时捕捉知乎、微博、小红书的情绪波动，守护个人与企业的声誉安全。
+           </div>
+           
+           <div class="hero-actions">
+             <a href="Html/analysis.html" class="btn btn-primary">
+               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+               上传数据分析
+             </a>
+             <a href="Html/work.html" class="btn btn-outline">了解核心技术</a>
+           </div>
+
+           <div class="stats-row">
+             <div class="stat-item">
+               <div class="num">98%</div>
+               <div class="label">情感识别率</div>
+             </div>
+             <div class="stat-item">
+               <div class="num">ms级</div>
+               <div class="label">数据响应延迟</div>
+             </div>
+             <div class="stat-item">
+               <div class="num">3+</div>
+               <div class="label">覆盖主流平台</div>
+             </div>
+           </div>
+        </div>
+
+        <div class="radar-wrapper">
+           <div class="radar-circle c1"></div>
+           <div class="radar-circle c2"></div>
+           <div class="radar-circle c3"></div>
+           <div class="radar-circle c4"></div>
+           <div class="radar-scan"></div>
+
+           <div class="radar-target target-xhs" title="小红书监测点" onclick="location.href='Html/xiaohongshu.html'">
+               <svg viewBox="0 0 1024 1024" fill="#ff2442"><path d="M512 0C229.2 0 0 229.2 0 512s229.2 512 512 512 512-229.2 512-512S794.8 0 512 0zm0 916c-223.2 0-404-180.8-404-404S288.8 108 512 108s404 180.8 404 404-180.8 404-404 404zm206-398c-10-14.6-25.6-22.4-44.2-22.4h-6.2c-10.4 0-20.2 3.2-28.6 8.8-19.4 13.2-32.2 35.2-32.2 60.2 0 16.2 5.4 31.2 14.6 43.2 11.2 14.6 28.2 24 47.4 24 33.6 0 61.8-23.2 69.2-54.6l.6-2.6c1.6-7.2 2.4-14.6 2.4-22.2 0-12.8-2.4-25-6.8-36.4l-16.2 2zM368 368c-55.2 0-100 44.8-100 100s44.8 100 100 100 100-44.8 100-100-44.8-100-100-100zm0 160c-33.2 0-60-26.8-60-60s26.8-60 60-60 60 26.8 60 60-26.8 60-60 60z"/></svg>
+           </div>
+
+           <div class="radar-target target-wx" title="微信监测点" onclick="location.href='Html/weibo_data.html'">
+               <svg viewBox="0 0 1024 1024" fill="#07C160"><path d="M668.6 638.9c0-104.9-95.6-190.6-218.4-190.6S231.8 534 231.8 638.9c0 104.9 95.6 190.6 218.4 190.6 26.5 0 52-4 75.8-11.3l61.6 33.7-14.2-54.6c46.7-41.5 75.2-96.1 75.2-158.4zm233.5-226.5c0-123.7-122.9-224.6-267.7-224.6-144.8 0-267.7 100.9-267.7 224.6 0 123.7 122.9 224.6 267.7 224.6 30.6 0 60.1-4.4 87.8-12.6l67.5 37.1-17.1-59.9c57.5-46.7 91.8-108.8 91.8-179.2z"/></svg>
+           </div>
+
+           <div class="radar-target target-zhihu" title="知乎监测点" onclick="location.href='Html/zhihu_data.html'">
+               <svg viewBox="0 0 1024 1024" fill="#0084FF"><path d="M569.8 494.7c16.5 0 29.8-13.3 29.8-29.8s-13.3-29.8-29.8-29.8c-16.5 0-29.8 13.3-29.8 29.8s13.3 29.8 29.8 29.8z m243.7-195H583.1c-12.1 0-21.9 9.8-21.9 21.9v239.6c0 12.1 9.8 21.9 21.9 21.9h66.2l20.4 58.9c3.2 9.2 11.9 15.3 21.6 15.3 3.6 0 7.2-0.8 10.5-2.5l67.9-34.2h43.8c12.1 0 21.9-9.8 21.9-21.9V321.6c0-12.1-9.9-21.9-21.9-21.9zM366.4 595.1l-24.1 79.6c-4.4 14.5 9.1 28.5 23.4 24.3l74.9-22.1c11.9-3.5 24.5 0.5 32.7 10.3 24.5 29.3 58.8 51.5 98.4 63.6 11.7 3.6 18.2 15.9 14.6 27.6-3.6 11.7-15.9 18.2-27.6 14.6-48.4-14.8-90.2-42-120.2-77.9l-61.6 18.1c-38.2 11.3-74.3-26.2-62.5-65l22.1-73.1H238c-12.3 0-22.2-9.9-22.2-22.2V321.6c0-12.3 9.9-22.2 22.2-22.2h183.3v-48.2c0-12.3 9.9-22.2 22.2-22.2h50.9c12.3 0 22.2 9.9 22.2 22.2v48.2h54.1c12.3 0 22.2 9.9 22.2 22.2v51.3c0 12.3-9.9 22.2-22.2 22.2h-54.1v69.4c0 48.7-16.6 94.7-46.1 130.6z"/></svg>
+           </div>
         </div>
       </div>
-      <a href="Html/analysis.html">CSV分析</a>
-      <a href="Html/work.html">我们的工作</a>
-      
-      <button id="theme-toggle" class="theme-btn" title="切换主题">
-        <svg class="icon-moon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
-    </nav>
-  </div>
-</header>
+    </section>
 
-<main>
-
-  <section class="hero-section">
-    <div class="container hero-wrapper">
-      
-      <div class="hero-text">
-         <h1>洞察社会脉搏<br><span>构建全域舆情感知雷达</span></h1>
-         <div class="hero-subtitle">
-           基于多普勒效应模型的舆情风险预警系统。实时捕捉知乎、微博、小红书的情绪波动，守护个人与企业的声誉安全。
-         </div>
-         
-         <div class="hero-actions">
-           <a href="Html/analysis.html" class="btn btn-primary">
-             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-             上传数据分析
-           </a>
-           <a href="Html/work.html" class="btn btn-outline">了解核心技术</a>
-         </div>
-
-         <div class="stats-row">
-           <div class="stat-item">
-             <div class="num">98%</div>
-             <div class="label">情感识别率</div>
-           </div>
-           <div class="stat-item">
-             <div class="num">ms级</div>
-             <div class="label">数据响应延迟</div>
-           </div>
-           <div class="stat-item">
-             <div class="num">3+</div>
-             <div class="label">覆盖主流平台</div>
-           </div>
-         </div>
-      </div>
-
-      <div class="radar-wrapper">
-         <div class="radar-circle c1"></div>
-         <div class="radar-circle c2"></div>
-         <div class="radar-circle c3"></div>
-         <div class="radar-circle c4"></div>
-         <div class="radar-scan"></div>
-
-         <div class="radar-target target-xhs" title="小红书监测点" onclick="location.href='Html/xiaohongshu.html'">
-             <svg viewBox="0 0 1024 1024" fill="#ff2442"><path d="M512 0C229.2 0 0 229.2 0 512s229.2 512 512 512 512-229.2 512-512S794.8 0 512 0zm0 916c-223.2 0-404-180.8-404-404S288.8 108 512 108s404 180.8 404 404-180.8 404-404 404zm206-398c-10-14.6-25.6-22.4-44.2-22.4h-6.2c-10.4 0-20.2 3.2-28.6 8.8-19.4 13.2-32.2 35.2-32.2 60.2 0 16.2 5.4 31.2 14.6 43.2 11.2 14.6 28.2 24 47.4 24 33.6 0 61.8-23.2 69.2-54.6l.6-2.6c1.6-7.2 2.4-14.6 2.4-22.2 0-12.8-2.4-25-6.8-36.4l-16.2 2zM368 368c-55.2 0-100 44.8-100 100s44.8 100 100 100 100-44.8 100-100-44.8-100-100-100zm0 160c-33.2 0-60-26.8-60-60s26.8-60 60-60 60 26.8 60 60-26.8 60-60 60z"/></svg>
-         </div>
-
-         <div class="radar-target target-wx" title="微信监测点" onclick="location.href='Html/weibo_data.html'">
-             <svg viewBox="0 0 1024 1024" fill="#07C160"><path d="M668.6 638.9c0-104.9-95.6-190.6-218.4-190.6S231.8 534 231.8 638.9c0 104.9 95.6 190.6 218.4 190.6 26.5 0 52-4 75.8-11.3l61.6 33.7-14.2-54.6c46.7-41.5 75.2-96.1 75.2-158.4zm233.5-226.5c0-123.7-122.9-224.6-267.7-224.6-144.8 0-267.7 100.9-267.7 224.6 0 123.7 122.9 224.6 267.7 224.6 30.6 0 60.1-4.4 87.8-12.6l67.5 37.1-17.1-59.9c57.5-46.7 91.8-108.8 91.8-179.2z"/></svg>
-         </div>
-
-         <div class="radar-target target-zhihu" title="知乎监测点" onclick="location.href='Html/zhihu_data.html'">
-             <svg viewBox="0 0 1024 1024" fill="#0084FF"><path d="M569.8 494.7c16.5 0 29.8-13.3 29.8-29.8s-13.3-29.8-29.8-29.8c-16.5 0-29.8 13.3-29.8 29.8s13.3 29.8 29.8 29.8z m243.7-195H583.1c-12.1 0-21.9 9.8-21.9 21.9v239.6c0 12.1 9.8 21.9 21.9 21.9h66.2l20.4 58.9c3.2 9.2 11.9 15.3 21.6 15.3 3.6 0 7.2-0.8 10.5-2.5l67.9-34.2h43.8c12.1 0 21.9-9.8 21.9-21.9V321.6c0-12.1-9.9-21.9-21.9-21.9zM366.4 595.1l-24.1 79.6c-4.4 14.5 9.1 28.5 23.4 24.3l74.9-22.1c11.9-3.5 24.5 0.5 32.7 10.3 24.5 29.3 58.8 51.5 98.4 63.6 11.7 3.6 18.2 15.9 14.6 27.6-3.6 11.7-15.9 18.2-27.6 14.6-48.4-14.8-90.2-42-120.2-77.9l-61.6 18.1c-38.2 11.3-74.3-26.2-62.5-65l22.1-73.1H238c-12.3 0-22.2-9.9-22.2-22.2V321.6c0-12.3 9.9-22.2 22.2-22.2h183.3v-48.2c0-12.3 9.9-22.2 22.2-22.2h50.9c12.3 0 22.2 9.9 22.2 22.2v48.2h54.1c12.3 0 22.2 9.9 22.2 22.2v51.3c0 12.3-9.9 22.2-22.2 22.2h-54.1v69.4c0 48.7-16.6 94.7-46.1 130.6z"/></svg>
-         </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="features">
-    <div class="container">
-      <div class="sec-header">
-        <h2>六大核心技术</h2>
-        <p>构建从感知到决策的全链路舆情防御体系</p>
-      </div>
-      
-      <div class="features-grid">
-        <article class="feature-card">
-          <div class="feature-icon">📡</div>
-          <h3>舆情信号感知</h3>
-          <p class="feature-desc">全天候扫描社交网络信息流，毫秒级捕捉关键词频率异常与热度跃迁信号。</p>
-          <ul class="feature-list">
-            <li>多源异构数据采集</li>
-            <li>实时热度异常检测</li>
-          </ul>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">🧠</div>
-          <h3>社会多普勒模型</h3>
-          <p class="feature-desc">独创物理映射算法，将舆论传播速度量化为“频移”，精准预测事件爆发点。</p>
-          <ul class="feature-list">
-            <li>传播速度矢量计算</li>
-            <li>舆论加速与衰减建模</li>
-          </ul>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">🔍</div>
-          <h3>跨平台溯源</h3>
-          <p class="feature-desc">打破数据孤岛，追踪单一事件在知乎、微博、小红书之间的流转路径。</p>
-          <ul class="feature-list">
-            <li>跨平台话题对齐</li>
-            <li>传播源头定位</li>
-          </ul>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">📊</div>
-          <h3>动态态势图谱</h3>
-          <p class="feature-desc">将复杂的社会情绪转化为直观的可视化图表，让决策者一眼看透全局。</p>
-          <ul class="feature-list">
-            <li>实时热力图</li>
-            <li>情感倾向仪表盘</li>
-          </ul>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">🚨</div>
-          <h3>智能分级预警</h3>
-          <p class="feature-desc">基于 AI 风险评估模型，针对不同等级的舆情风险触发差异化警报。</p>
-          <ul class="feature-list">
-            <li>阈值触发机制</li>
-            <li>多渠道自动推送</li>
-          </ul>
-        </article>
-
-        <article class="feature-card">
-          <div class="feature-icon">🛡️</div>
-          <h3>学术级可信度</h3>
-          <p class="feature-desc">算法透明可解释，所有分析结果均提供完整的置信度区间与数据支撑。</p>
-          <ul class="feature-list">
-            <li>原始数据可追溯</li>
-            <li>算法白盒化展示</li>
-          </ul>
-        </article>
-      </div>
-    </div>
-  </section>
-
-</main>
-
-<script>
-
-document.addEventListener('DOMContentLoaded', () => {
-    const toggleBtn = document.getElementById('theme-toggle');
-    const root = document.documentElement;
-    const iconPath = toggleBtn.querySelector('path');
-    
-    
-    const saved = localStorage.getItem('theme');
-    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        root.setAttribute('data-theme', 'dark');
-        updateIcon(true);
-    }
-
-    toggleBtn.addEventListener('click', () => {
-        const isDark = root.getAttribute('data-theme') === 'dark';
-        root.setAttribute('data-theme', isDark ? 'light' : 'dark');
-        localStorage.setItem('theme', isDark ? 'light' : 'dark');
-        updateIcon(!isDark);
-    });
-
-    function updateIcon(isDark) {
+    <section class="features">
+      <div class="container">
+        <div class="sec-header">
+          <h2>六大核心技术</h2>
+          <p>构建从感知到决策的全链路舆情防御体系</p>
+        </div>
         
-        if(isDark) {
-             toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
-        } else {
-             toggleBtn.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-        }
-    }
-});
-</script>
+        <div class="features-grid">
+          <article class="feature-card">
+            <div class="feature-icon">📡</div>
+            <h3>舆情信号感知</h3>
+            <p class="feature-desc">全天候扫描社交网络信息流，毫秒级捕捉关键词频率异常与热度跃迁信号。</p>
+            <ul class="feature-list">
+              <li>多源异构数据采集</li>
+              <li>实时热度异常检测</li>
+            </ul>
+          </article>
 
-</body>
+          <article class="feature-card">
+            <div class="feature-icon">🧠</div>
+            <h3>社会多普勒模型</h3>
+            <p class="feature-desc">独创物理映射算法，将舆论传播速度量化为“频移”，精准预测事件爆发点。</p>
+            <ul class="feature-list">
+              <li>传播速度矢量计算</li>
+              <li>舆论加速与衰减建模</li>
+            </ul>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">🔍</div>
+            <h3>跨平台溯源</h3>
+            <p class="feature-desc">打破数据孤岛，追踪单一事件在知乎、微博、小红书之间的流转路径。</p>
+            <ul class="feature-list">
+              <li>跨平台话题对齐</li>
+              <li>传播源头定位</li>
+            </ul>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>动态态势图谱</h3>
+            <p class="feature-desc">将复杂的社会情绪转化为直观的可视化图表，让决策者一眼看透全局。</p>
+            <ul class="feature-list">
+              <li>实时热力图</li>
+              <li>情感倾向仪表盘</li>
+            </ul>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">🚨</div>
+            <h3>智能分级预警</h3>
+            <p class="feature-desc">基于 AI 风险评估模型，针对不同等级的舆情风险触发差异化警报。</p>
+            <ul class="feature-list">
+              <li>阈值触发机制</li>
+              <li>多渠道自动推送</li>
+            </ul>
+          </article>
+
+          <article class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>学术级可信度</h3>
+            <p class="feature-desc">算法透明可解释，所有分析结果均提供完整的置信度区间与数据支撑。</p>
+            <ul class="feature-list">
+              <li>原始数据可追溯</li>
+              <li>算法白盒化展示</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="JS/navbar.js"></script>
+
+  </body>
 </html>
