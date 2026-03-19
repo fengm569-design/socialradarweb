@@ -6,45 +6,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="../CSS/xiaohongshu_data.css">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
+<style>
+  /* 全局样式基础变量补充 (防缺失) */
+  :root {
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --text-muted: #7f8c8d;
+    --primary-color: #0084ff;
+    --border-color: #e4e7ed;
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  [data-theme="dark"] {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+    --shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.3s; }
+  
+  /* 导航栏样式补充 (适配 navbar.js) */
+  header { background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .nav { display: flex; justify-content: space-between; align-items: center; height: 60px; }
+  .brand { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
+  .menu { display: flex; align-items: center; gap: 20px; font-size: 0.95rem; }
+  .menu a { text-decoration: none; color: inherit; }
+  .menu a:hover, .menu a.active { color: var(--primary-color); }
+  .theme-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; }
+
+  /* 下拉菜单补充 */
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+  .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
+  .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
+  .dropdown:hover .dropdown-content { display: block; }
+</style>
+
 </head>
 <body>
 
-<script>
-  document.addEventListener('DOMContentLoaded', function() {
-    var currentUrl = window.location.pathname;
-    var menuLinks = document.querySelectorAll('.menu a');
-    menuLinks.forEach(function(link) {
-      if (link.getAttribute('href') && currentUrl.includes(link.getAttribute('href'))) {
-        link.classList.add('active');
-      } else {
-        link.classList.remove('active');
-      }
-    });
-  });
-</script>
+<header id="common-header"></header>
 
-<header>
-  <div class="container nav">
-    <div class="brand">社会雷达 · Social Radar</div>
-    <div class="menu">
-      <a href="../index.html">首页</a>
-      <div class="dropdown">
-        <a href="javascript:void(0)" class="dropbtn active">数据分析</a>
-        <div class="dropdown-content">
-          <a href="zhihu_data.html">知乎</a>
-          <a href="weibo_data.html">微信公众号</a>
-          <a href="xiaohongshu_data.html" class="active">小红书</a>
-        </div>
-      </div>
-      <a href="analysis.html">CSV分析</a>
-      <a href="work.html">我们的工作</a>
-    </div>
-  </div>
-</header>
-
-<div class="container">
+<main class="container">
   
-  <div class="card summary-card">
+  <div class="card summary-card" style="background-color: var(--card-bg); border-color: var(--border-color);">
     <h2>数据概览</h2>
     <div class="summary-stats">
         <div class="stat-item">
@@ -62,7 +72,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" style="background-color: var(--card-bg); border-color: var(--border-color);">
       <div class="card-header" style="border-bottom:none; padding-left:0;">
         <h2 style="margin:0; border-left:4px solid #ff2442; padding-left:10px;">小红书综合热度趋势 (所有话题总和)</h2>
       </div>
@@ -82,7 +92,9 @@
     <div class="loading">正在加载数据...</div>
   </div>
 
-</div>
+</main>
+
+<script src="../JS/navbar.js"></script>
 
 <script>
 const CURRENT_DATE = new Date(); 
@@ -90,10 +102,33 @@ const CURRENT_DATE = new Date();
 // 定义小红书特有的负面关键词
 const NEGATIVE_KEYWORDS = ["避雷", "踩坑", "失望", "差评", "吐槽", "黑榜", "垃圾", "无语", "别去", "别买", "后悔", "上当", "拔草", "劝退", "恶心", "不行", "烂", "智商税"];
 
-// 全局数据
+// 全局数据缓存
 let GLOBAL_ALL_DATA = [];
+let globalChartInstance = null;
 
-/* ================= 筛选逻辑 ================= */
+// ================= 主题监听与颜色获取 =================
+document.addEventListener('DOMContentLoaded', () => {
+    observeThemeChange();
+});
+
+function observeThemeChange() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-theme' && GLOBAL_ALL_DATA.length > 0) {
+                // 主题切换时重新渲染图表以适配文字颜色
+                renderGlobalTrendChart(GLOBAL_ALL_DATA);
+                toggleFilter(); // 重新渲染下方列表和小图表
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+function getTextColor() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? '#c9d1d9' : '#333333';
+}
+
+// ================= 筛选逻辑 =================
 function toggleFilter() {
     const isFilterOn = document.getElementById('negative-filter').checked;
     const area = document.getElementById('content-area');
@@ -103,7 +138,6 @@ function toggleFilter() {
     let filteredCount = 0;
 
     GLOBAL_ALL_DATA.forEach(d => {
-        // 筛选逻辑
         if (isFilterOn) {
             const textToCheck = d.title.toLowerCase();
             const hasNegativeWord = NEGATIVE_KEYWORDS.some(kw => textToCheck.includes(kw));
@@ -115,18 +149,15 @@ function toggleFilter() {
         filteredCount++;
     });
 
-    // 如果筛选后没数据
     if (Object.keys(grouped).length === 0) {
-        area.innerHTML = '<div style="text-align:center; padding:50px; color:#999;">没有找到符合条件的负面内容</div>';
+        area.innerHTML = '<div style="text-align:center; padding:50px; color:var(--text-muted);">没有找到符合条件的负面内容</div>';
         document.getElementById('total-notes').innerText = filteredCount + (isFilterOn ? " (筛选后)" : "");
         return;
     }
 
-    // 更新统计数字
     document.getElementById('total-notes').innerText = filteredCount + (isFilterOn ? " (筛选后)" : "");
     document.getElementById('total-batches').innerText = Object.keys(grouped).length;
 
-    // 重新渲染列表
     render(grouped);
 }
 
@@ -142,7 +173,7 @@ function normalizeDate(dateStr) {
     return null;
 }
 
-/* ================= CSV 解析 ================= */
+// ================= CSV 解析 =================
 function parseCSVLine(line) {
     const result = [];
     let startValue = 0;
@@ -182,10 +213,15 @@ function parseCSV(text){
     }).filter(d => d !== null && d.publish_time !== null);
 }
 
-/* ================= 全局趋势图 ================= */
+// ================= 全局趋势图 =================
 function renderGlobalTrendChart(allData) {
     const dom = document.getElementById('global-trend-chart');
     if(!dom) return;
+
+    if (globalChartInstance != null) {
+        globalChartInstance.dispose();
+    }
+    globalChartInstance = echarts.init(dom);
 
     const dateMap = {};
     allData.forEach(d => {
@@ -195,9 +231,9 @@ function renderGlobalTrendChart(allData) {
 
     const sortedDates = Object.keys(dateMap).sort();
     const counts = sortedDates.map(d => dateMap[d]);
+    const textColor = getTextColor();
 
-    const chart = echarts.init(dom);
-    chart.setOption({
+    globalChartInstance.setOption({
         tooltip: { 
             trigger: 'axis',
             formatter: '{b} <br/> 全网总新增: {c} 篇',
@@ -209,12 +245,14 @@ function renderGlobalTrendChart(allData) {
             type: 'category', 
             data: sortedDates, 
             boundaryGap: false,
-            axisLine: { lineStyle: { color: '#ccc' } }
+            axisLine: { lineStyle: { color: textColor } },
+            axisLabel: { color: textColor }
         },
         yAxis: { 
             type: 'value', 
             minInterval: 1,
-            splitLine: { lineStyle: { type: 'dashed', color: '#eee' } }
+            splitLine: { lineStyle: { type: 'dashed', color: 'rgba(150,150,150,0.2)' } },
+            axisLabel: { color: textColor }
         },
         series: [{
             name: '总热度',
@@ -234,10 +272,10 @@ function renderGlobalTrendChart(allData) {
         }]
     });
 
-    window.addEventListener('resize', () => chart.resize());
+    window.addEventListener('resize', () => globalChartInstance.resize());
 }
 
-/* ================= 单个话题趋势图 ================= */
+// ================= 单个话题趋势图 =================
 function buildTrendStats(data) {
     const dateMap = {};
     data.forEach(d => {
@@ -250,15 +288,27 @@ function buildTrendStats(data) {
 function drawSmallChart(domId, stats, color) {
     const dom = document.getElementById(domId);
     if (!dom || stats.dates.length === 0) {
-        if(dom) dom.innerHTML = '<div class="no-data">暂无数据</div>';
+        if(dom) dom.innerHTML = '<div class="no-data" style="color:var(--text-muted)">暂无数据</div>';
         return;
     }
     const chart = echarts.init(dom);
+    const textColor = getTextColor();
+
     chart.setOption({
         tooltip: { trigger: 'axis' },
         grid: { top: 20, right: 10, bottom: 20, left: 30, containLabel: true },
-        xAxis: { type: 'category', data: stats.dates, axisLine: { lineStyle: { color: '#eee' } } },
-        yAxis: { type: 'value', minInterval: 1, splitLine: { lineStyle: { type: 'dashed', color: '#f5f5f5' } } },
+        xAxis: { 
+            type: 'category', 
+            data: stats.dates, 
+            axisLine: { lineStyle: { color: textColor } },
+            axisLabel: { color: textColor }
+        },
+        yAxis: { 
+            type: 'value', 
+            minInterval: 1, 
+            splitLine: { lineStyle: { type: 'dashed', color: 'rgba(150,150,150,0.2)' } },
+            axisLabel: { color: textColor }
+        },
         series: [{
             data: stats.counts, type: 'line', smooth: true, symbol: 'none',
             itemStyle: { color: color },
@@ -270,7 +320,7 @@ function drawSmallChart(domId, stats, color) {
     window.addEventListener('resize', () => chart.resize());
 }
 
-/* ================= 页面渲染主逻辑 ================= */
+// ================= 页面渲染主逻辑 =================
 function render(groupedData) {
     const container = document.getElementById('content-area');
     container.innerHTML = '';
@@ -282,24 +332,26 @@ function render(groupedData) {
         const totalLikes = items.reduce((sum, item) => sum + item.like_count, 0);
         const stats = buildTrendStats(items);
         
-        // 按发布时间倒序排列 (最新的在最前)
+        // 按发布时间倒序排列
         const topPosts = [...items].sort((a, b) => {
             return new Date(b.publish_time) - new Date(a.publish_time);
         }).slice(0, 5); 
 
-        let postsHtml = '<ul class="post-list">';
+        let postsHtml = '<ul class="post-list" style="list-style:none; padding:0;">';
         topPosts.forEach(p => {
-            // 高亮处理
             let displayTitle = p.title;
             if (isFilterOn) {
                 NEGATIVE_KEYWORDS.forEach(kw => {
-                    displayTitle = displayTitle.replace(new RegExp(kw, 'g'), `<span style="color:#d32f2f;background:#ffebee;padding:0 2px;">${kw}</span>`);
+                    displayTitle = displayTitle.replace(new RegExp(kw, 'g'), `<span style="color:#d32f2f;background:#ffebee;padding:0 2px;border-radius:2px;">${kw}</span>`);
                 });
             }
 
-            postsHtml += `<li>
-                <a href="${p.url}" target="_blank" title="${p.title}">${displayTitle}</a>
-                <div class="post-meta"><span>❤️ ${p.like_count}</span><span class="date">${p.raw_time}</span></div>
+            postsHtml += `<li style="margin-bottom: 12px; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px;">
+                <a href="${p.url}" target="_blank" title="${p.title}" style="color: var(--text-main); text-decoration: none; font-weight: 500; display: block; margin-bottom: 5px;">${displayTitle}</a>
+                <div class="post-meta" style="font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 15px;">
+                    <span>❤️ ${p.like_count}</span>
+                    <span class="date">📅 ${p.raw_time}</span>
+                </div>
             </li>`;
         });
         postsHtml += '</ul>';
@@ -307,21 +359,23 @@ function render(groupedData) {
         const chartId = `chart-${index}`;
         const card = document.createElement('div');
         card.className = 'topic-card';
+        card.style.cssText = 'background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 25px; overflow: hidden; box-shadow: var(--shadow);';
+        
         card.innerHTML = `
-            <div class="card-header">
-                <div class="topic-title"><span class="icon">#</span> ${name}</div>
-                <div class="topic-stats">
-                    <span class="badge">笔记: ${items.length}</span>
-                    <span class="badge red">获赞: ${totalLikes}</span>
+            <div class="card-header" style="background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border-color); padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div class="topic-title" style="font-size: 1.2rem; font-weight: bold; color: var(--text-main);"><span style="color:#ff2442; margin-right:5px;">#</span> ${name}</div>
+                <div class="topic-stats" style="font-size: 0.9rem;">
+                    <span style="background: var(--bg-color); padding: 4px 10px; border-radius: 20px; border: 1px solid var(--border-color); margin-right: 10px;">笔记: ${items.length}</span>
+                    <span style="background: #fff0f0; color: #ff2442; padding: 4px 10px; border-radius: 20px; border: 1px solid #ffcccc;">获赞: ${totalLikes}</span>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="chart-section">
-                    <h4>话题热度趋势 (篇/天)</h4>
-                    <div id="${chartId}" class="chart-box"></div>
+            <div class="card-body" style="display: flex; flex-wrap: wrap; padding: 20px;">
+                <div class="chart-section" style="flex: 1; min-width: 300px; padding-right: 20px;">
+                    <h4 style="margin-top:0; color: var(--text-muted); font-size: 0.95rem;">话题热度趋势 (篇/天)</h4>
+                    <div id="${chartId}" class="chart-box" style="height: 250px;"></div>
                 </div>
-                <div class="list-section">
-                    <h4>最新动态 ${isFilterOn ? '(负面)' : '(按时间)'}</h4>
+                <div class="list-section" style="flex: 1; min-width: 300px;">
+                    <h4 style="margin-top:0; color: var(--text-muted); font-size: 0.95rem;">最新动态 ${isFilterOn ? '(负面)' : '(按时间)'}</h4>
                     ${postsHtml}
                 </div>
             </div>`;
@@ -330,13 +384,12 @@ function render(groupedData) {
     });
 }
 
-/* ================= 入口 ================= */
+// ================= 入口 =================
 fetch('../data/xiaohongshu_data.csv')
     .then(r => r.text())
     .then(text => {
         const data = parseCSV(text);
         
-        // 保存到全局变量，供筛选使用
         GLOBAL_ALL_DATA = data;
         
         document.getElementById('total-notes').innerText = data.length;
@@ -344,7 +397,6 @@ fetch('../data/xiaohongshu_data.csv')
 
         renderGlobalTrendChart(data);
 
-        // 初始分组
         const grouped = {};
         data.forEach(d => {
             if (!grouped[d.batch_name]) grouped[d.batch_name] = [];

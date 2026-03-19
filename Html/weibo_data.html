@@ -6,38 +6,70 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="../CSS/data.css">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+
 <style>
-    /* 针对微博页面的特定覆盖样式 */
-    :root {
-        --primary-color: #e6162d; /* 微博红 */
-        --primary-light: #fff0f0;
-    }
-    /* 调整一下加载遮罩的颜色以匹配微博红 */
-    #loading { color: var(--primary-color); }
+  /* 全局样式基础变量补充与微博专属色覆盖 */
+  :root {
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --text-muted: #7f8c8d;
+    --border-color: #e4e7ed;
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
+    
+    /* 微博专属红 */
+    --primary-color: #e6162d; 
+    --primary-light: #fff0f0;
+  }
+
+  [data-theme="dark"] {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+    --shadow: 0 4px 12px rgba(0,0,0,0.4);
+    --primary-light: rgba(230, 22, 45, 0.15);
+  }
+
+  body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.3s; }
+  
+  #loading { color: var(--primary-color); }
+
+  /* 导航栏样式补充 (适配 navbar.js) */
+  header { background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .nav { display: flex; justify-content: space-between; align-items: center; height: 60px; }
+  .brand { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
+  .menu { display: flex; align-items: center; gap: 20px; font-size: 0.95rem; }
+  .menu a { text-decoration: none; color: inherit; }
+  .menu a:hover, .menu a.active { color: var(--primary-color); }
+  .theme-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; }
+
+  /* 下拉菜单补充 */
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+  .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
+  .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
+  .dropdown:hover .dropdown-content { display: block; }
+
+  /* 卡片和内容区适配暗黑模式 */
+  .card { background-color: var(--card-bg); border-color: var(--border-color); color: var(--text-main); }
+  .person-card { background-color: var(--card-bg); border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+  .person-header { border-bottom: 1px solid var(--border-color); background: rgba(0,0,0,0.02); }
+  .stat-box { background: var(--bg-color); border: 1px solid var(--border-color); }
+  .post-date { color: var(--text-muted); }
+  .person-post-list a { color: var(--text-main); }
+  
+  /* 针对微博特有的样式修饰 */
+  .person-avatar { background: var(--primary-color) !important; color: #fff; }
 </style>
+
 </head>
 <body>
 
 <div id="loading">正在获取数据...</div>
 
-<header>
-  <div class="container nav">
-    <div class="brand">社会雷达 · Social Radar</div>
-    <div class="menu">
-      <a href="../index.html">首页</a>
-      <div class="dropdown">
-        <a href="javascript:void(0)" class="dropbtn active">数据分析</a>
-        <div class="dropdown-content">
-          <a href="zhihu_data.html">知乎</a>
-          <a href="weibo_data.html" class="active">微信公众号</a>
-          <a href="xiaohongshu.html">小红书</a>
-        </div>
-      </div>
-      <a href="analysis.html">CSV分析</a>
-      <a href="work.html">我们的工作</a>
-    </div>
-  </div>
-</header>
+<header id="common-header"></header>
 
 <div class="container">
 
@@ -46,22 +78,22 @@
     
     <div class="summary-bar">
         <div class="stat-box">
-            <span class="stat-num" id="total-posts">0</span>
+            <span class="stat-num" id="total-posts" style="color: var(--primary-color);">0</span>
             <span class="stat-label">监控微博总量</span>
         </div>
         <div class="stat-box">
-            <span class="stat-num" id="total-people">0</span>
+            <span class="stat-num" id="total-people" style="color: var(--primary-color);">0</span>
             <span class="stat-label">覆盖话题/博主</span>
         </div>
     </div>
 
     <div class="charts-wrapper">
       <div>
-        <h3>总声量趋势（按月）</h3>
+        <h3 style="color: var(--text-main);">总声量趋势（按月）</h3>
         <div id="global-month" class="chart-container"></div>
       </div>
       <div>
-        <h3>最近一周声量（按日）</h3>
+        <h3 style="color: var(--text-main);">最近一周声量（按日）</h3>
         <div id="global-week" class="chart-container"></div>
       </div>
     </div>
@@ -71,24 +103,45 @@
 
 </div>
 
-<script>
-// 导航栏高亮逻辑
-document.addEventListener('DOMContentLoaded', function() {
-    var currentUrl = window.location.pathname;
-    var menuLinks = document.querySelectorAll('.menu a');
-    menuLinks.forEach(function(link) {
-        if (link.getAttribute('href') && currentUrl.includes(link.getAttribute('href'))) {
-            link.classList.add('active');
-        } else {
-            link.classList.remove('active');
-        }
-    });
-});
+<script src="../JS/navbar.js"></script>
 
+<script>
 const CURRENT_DATE = new Date('2026-01-02');
 
+// 全局数据缓存，用于主题切换时重绘
+let GLOBAL_ALL_DATA = [];
+let GLOBAL_GROUPED = {};
+
+// ================= 主题监听与颜色获取 =================
+document.addEventListener('DOMContentLoaded', () => {
+    observeThemeChange();
+});
+
+function observeThemeChange() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-theme' && GLOBAL_ALL_DATA.length > 0) {
+                // 主题切换时重新渲染图表以适配文字颜色
+                const globalStats = buildStats(GLOBAL_ALL_DATA);
+                drawLine(document.getElementById('global-month'), globalStats.monthly.labels, globalStats.monthly.data, '#e6162d');
+                drawWeekly(document.getElementById('global-week'), globalStats.weekly);
+                renderPersons(GLOBAL_GROUPED); // 重新渲染列表及子图表
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+}
+
+function getThemeColors() {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    return {
+        text: isDark ? '#c9d1d9' : '#333333',
+        axisLine: isDark ? '#444444' : '#dddddd',
+        splitLine: isDark ? 'rgba(255,255,255,0.05)' : '#f0f0f0'
+    };
+}
+
 /* ================= 工具：增强型 CSV 解析 ================= */
-// 处理带引号和逗号的 CSV 行
 function parseCSVLine(line) {
     const result = [];
     let startValue = 0;
@@ -113,10 +166,8 @@ function parseCSV(text){
     const lines = text.trim().split('\n');
     return lines.slice(1).map(l => {
         const arr = parseCSVLine(l);
-        if(arr.length < 5) return null; // 确保列数足够
+        if(arr.length < 5) return null;
         
-        // 映射微博 CSV 字段
-        // 结构: keyword, source, username, created_at, content_text, url, ...
         return {
             keyword: arr[0],
             username: arr[2],
@@ -147,7 +198,6 @@ function buildStats(data){
     data.forEach(d => {
         if(!d.created_at) return;
         
-        // 简单处理日期格式，假设是 YYYY-MM-DD 开头
         const m = d.created_at.slice(0,7);
         monthMap[m] = (monthMap[m]||0)+1;
 
@@ -170,23 +220,31 @@ function buildStats(data){
     };
 }
 
-/* ================= 绘图函数 ================= */
+/* ================= ECharts 绘图函数 ================= */
 function drawLine(dom, labels, data, color='#e6162d'){
     if(!dom) return;
-    const chart = echarts.init(dom);
+    
+    // 防内存泄漏
+    let chart = echarts.getInstanceByDom(dom);
+    if (chart) chart.dispose();
+    chart = echarts.init(dom);
+
+    const theme = getThemeColors();
+
     chart.setOption({
         tooltip: { trigger: 'axis' },
         grid: { top: 20, right: 10, bottom: 20, left: 30, containLabel: true },
         xAxis: { 
             type: 'category', 
             data: labels,
-            axisLine: { lineStyle: { color: '#ddd' } },
-            axisLabel: { color: '#999', fontSize: 11 }
+            axisLine: { lineStyle: { color: theme.axisLine } },
+            axisLabel: { color: theme.text, fontSize: 11 }
         },
         yAxis: { 
             type: 'value', 
             minInterval: 1,
-            splitLine: { lineStyle: { type: 'dashed', color: '#f0f0f0' } }
+            splitLine: { lineStyle: { type: 'dashed', color: theme.splitLine } },
+            axisLabel: { color: theme.text }
         },
         series: [{
             type: 'line',
@@ -208,7 +266,7 @@ function drawLine(dom, labels, data, color='#e6162d'){
 
 function drawWeekly(dom, stats){
     if(!stats.hasData){
-        dom.innerHTML = '<div class="no-data-msg">近一周无更新</div>';
+        dom.innerHTML = '<div class="no-data-msg" style="color:var(--text-muted)">近一周无更新</div>';
         return;
     }
     drawLine(dom, stats.labels.map(d => d.slice(5)), stats.data, '#e6162d');
@@ -222,19 +280,18 @@ function renderPersons(grouped){
     Object.keys(grouped).forEach((keyword, index) => {
         const personData = grouped[keyword];
         const stats = buildStats(personData);
-        const showPosts = personData.slice(0, 5); // 取前5条
+        const showPosts = personData.slice(0, 5); 
 
-        let postsHtml = '<ul class="person-post-list">';
+        let postsHtml = '<ul class="person-post-list" style="list-style:none; padding:0;">';
         showPosts.forEach(p => {
-            // 微博内容通常较长，做个截断处理
             const displayContent = p.content_text.length > 60 ? p.content_text.substring(0, 60) + '...' : p.content_text;
             
             postsHtml += `
-                <li>
-                    <a href="${p.url}" target="_blank" title="${p.content_text}">
+                <li style="margin-bottom: 12px; border-bottom: 1px dashed var(--border-color); padding-bottom: 8px;">
+                    <a href="${p.url}" target="_blank" title="${p.content_text}" style="color: var(--text-main); text-decoration: none; font-weight: 500; display: block; margin-bottom: 5px;">
                         ${displayContent}
                     </a>
-                    <span class="post-date">${p.created_at}</span>
+                    <span class="post-date" style="font-size: 0.85rem; color: var(--text-muted);">📅 ${p.created_at}</span>
                 </li>
             `;
         });
@@ -242,34 +299,34 @@ function renderPersons(grouped){
 
         const card = document.createElement('div');
         card.className = 'person-card';
+        card.style.cssText = 'background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 25px; overflow: hidden; box-shadow: var(--shadow);';
         
-        // 动态ID
         const mChartId = `m-${index}`;
         const wChartId = `w-${index}`;
 
         card.innerHTML = `
-            <div class="person-header">
-                <div class="person-avatar">${keyword[0]}</div>
+            <div class="person-header" style="background: rgba(0,0,0,0.02); border-bottom: 1px solid var(--border-color); padding: 15px 20px; display: flex; align-items: center; gap: 15px;">
+                <div class="person-avatar" style="width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: bold;">${keyword[0]}</div>
                 <div class="person-info">
-                    <h3>${keyword}</h3>
-                    <span class="tag-badge">微博数: ${personData.length}</span>
+                    <h3 style="margin: 0; color: var(--text-main);">${keyword}</h3>
+                    <span class="tag-badge" style="background: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-muted); padding: 2px 8px; border-radius: 12px; font-size: 12px; display: inline-block; margin-top: 5px;">微博数: ${personData.length}</span>
                 </div>
             </div>
 
-            <div class="person-body">
-                <div class="charts-wrapper small" style="grid-template-columns: 1fr;">
+            <div class="person-body" style="padding: 20px;">
+                <div class="charts-wrapper small" style="display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 20px;">
                     <div>
-                        <h4 style="margin:0 0 5px 0; font-size:12px; color:#999;">月度声量</h4>
-                        <div class="chart-container" id="${mChartId}" style="height:140px;"></div>
+                        <h4 style="margin:0 0 5px 0; font-size:12px; color:var(--text-muted);">月度声量</h4>
+                        <div class="chart-container" id="${mChartId}" style="height:140px; width:100%;"></div>
                     </div>
                     <div>
-                        <h4 style="margin:10px 0 5px 0; font-size:12px; color:#999;">本周动态</h4>
-                        <div class="chart-container" id="${wChartId}" style="height:140px;"></div>
+                        <h4 style="margin:10px 0 5px 0; font-size:12px; color:var(--text-muted);">本周动态</h4>
+                        <div class="chart-container" id="${wChartId}" style="height:140px; width:100%;"></div>
                     </div>
                 </div>
 
-                <div class="person-posts">
-                    <h4>📢 精选微博动态</h4>
+                <div class="person-posts" style="background: var(--bg-color); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <h4 style="margin-top:0; color: var(--text-muted);">📢 精选微博动态</h4>
                     ${postsHtml}
                 </div>
             </div>
@@ -277,7 +334,6 @@ function renderPersons(grouped){
 
         area.appendChild(card);
 
-        // 渲染小图表
         setTimeout(() => {
             drawLine(document.getElementById(mChartId), stats.monthly.labels, stats.monthly.data, '#e6162d');
             drawWeekly(document.getElementById(wChartId), stats.weekly);
@@ -294,6 +350,8 @@ Promise.all([
 
     // 合并两个CSV的数据
     const all = [...parseCSV(res[0]), ...parseCSV(res[1])];
+    
+    GLOBAL_ALL_DATA = all;
 
     // 1. 更新顶部统计
     document.getElementById('total-posts').innerText = all.length;
@@ -309,12 +367,14 @@ Promise.all([
         grouped[d.keyword] = grouped[d.keyword] || [];
         grouped[d.keyword].push(d);
     });
+    
+    GLOBAL_GROUPED = grouped;
     document.getElementById('total-people').innerText = Object.keys(grouped).length;
     renderPersons(grouped);
 
 }).catch(err => {
     document.getElementById('loading').innerHTML = `
-        <div style="text-align:center; color:#f00;">
+        <div style="text-align:center; color:#e6162d; padding:20px;">
             <p>数据加载失败</p>
             <small>${err.message}</small>
             <p>请检查 ../data/ 目录下是否存在 weibo_data.csv 和 weibo_data_new.csv</p>
@@ -322,7 +382,6 @@ Promise.all([
     `;
     console.error("Data Load Error:", err);
 });
-
 </script>
 
 </body>

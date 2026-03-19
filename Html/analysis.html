@@ -4,36 +4,30 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CSV 智能分析 - 社会雷达</title>
+
 <link rel="stylesheet" href="../CSS/work.css">
 <link rel="stylesheet" href="../CSS/analysis.css">
+
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<style>
+  /* 补充下拉菜单和加载动画的兼容样式 */
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+  .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
+  .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
+  .dropdown:hover .dropdown-content { display: block; }
+  
+  #loading-spinner { display: none; text-align: center; padding: 40px; color: var(--primary-color); }
+  .spinner-icon { animation: spin 1s linear infinite; margin-bottom: 10px; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+</style>
 </head>
 
 <body>
 
-<header>
-  <div class="container nav">
-    <div class="brand">社会雷达 · Social Radar</div>
-    <div class="menu">
-      <a href="../index.html">首页</a>
-      <div class="dropdown">
-        <a href="javascript:void(0)" class="dropbtn">数据分析</a>
-        <div class="dropdown-content">
-          <a href="zhihu_data.html">知乎</a>
-          <a href="weibo_data.html">微信公众号</a>
-          <a href="xiaohongshu.html">小红书</a>
-        </div>
-      </div>
-      <a href="analysis.html" class="active">CSV分析</a>
-      <a href="work.html">我们的工作</a>
-      
-      <button id="theme-toggle" class="btn-icon" title="切换主题">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
-    </div>
-  </div>
-</header>
+<header id="common-header"></header>
 
 <main class="container">
   <section class="page-header">
@@ -53,8 +47,12 @@
     </div>
   </div>
 
+  <div id="loading-spinner">
+    <svg class="spinner-icon" viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>
+    <h3>📡 雷达正在强力解析数据，请稍候...</h3>
+  </div>
+
   <div id="result-section" style="display:none;">
-    
     <div class="stats-grid">
         <div class="stat-card">
             <div class="label">数据总量</div>
@@ -74,8 +72,8 @@
         <div class="chart-header">
             <h2>传播多普勒效应模拟</h2>
             <div class="chart-legend">
-                <span class="dot primary"></span> 传播热度 (S)
-                <span class="dot secondary" style="margin-left:15px"></span> 传播速度 (v)
+                <span class="dot primary" style="background:#0084ff; display:inline-block; width:10px; height:10px; border-radius:50%;"></span> 传播热度 (S)
+                <span class="dot secondary" style="background:#ff8200; display:inline-block; width:10px; height:10px; border-radius:50%; margin-left:15px;"></span> 传播速度 (v)
             </div>
         </div>
         <div id="main-chart" style="width:100%; height:400px;"></div>
@@ -90,15 +88,25 @@
         <button class="btn btn-primary" onclick="alert('报告已生成 PDF (演示)')">下载分析报告</button>
     </div>
   </div>
-
 </main>
+
+<script src="../JS/navbar.js"></script>
 
 <script>
 // ================= 核心逻辑 =================
-
 const dropArea = document.getElementById('drop-area');
 const fileInput = document.getElementById('file-input');
 const resultSection = document.getElementById('result-section');
+const loadingSpinner = document.getElementById('loading-spinner');
+const uploadCard = document.getElementById('upload-card');
+
+let chartInstance = null; // 用于管理 ECharts 实例，防止内存泄漏
+let currentChartData = null; // 缓存当前渲染的数据，方便切换主题时重绘
+
+// 启动主题变化的全局监听
+document.addEventListener('DOMContentLoaded', () => {
+    observeThemeChange();
+});
 
 // 1. 拖拽交互
 ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -113,16 +121,8 @@ function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
     dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
 });
 
-dropArea.addEventListener('drop', handleDrop, false);
-function handleDrop(e) {
-    const dt = e.dataTransfer;
-    const files = dt.files;
-    handleFiles(files);
-}
-
-fileInput.addEventListener('change', function() {
-    handleFiles(this.files);
-});
+dropArea.addEventListener('drop', (e) => handleFiles(e.dataTransfer.files), false);
+fileInput.addEventListener('change', function() { handleFiles(this.files); });
 
 function handleFiles(files) {
     if(files.length > 0) {
@@ -131,110 +131,148 @@ function handleFiles(files) {
             alert("请上传 CSV 格式文件");
             return;
         }
-        processFile(file);
+        processFileRobust(file);
     }
 }
 
-// 2. 文件处理与解析
-function processFile(file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const text = e.target.result;
-        try {
-            const data = parseCSV(text);
-            if(data.length === 0) throw new Error("数据为空或格式无法识别");
+// 2. 使用 PapaParse 进行稳健解析
+function processFileRobust(file) {
+    uploadCard.style.display = 'none';
+    resultSection.style.display = 'none';
+    loadingSpinner.style.display = 'block'; // 显示加载动画
+    
+    Papa.parse(file, {
+        header: true, // 自动将第一行作为表头
+        skipEmptyLines: true,
+        complete: function(results) {
+            loadingSpinner.style.display = 'none';
+            const data = results.data;
+            if(data.length === 0) {
+                alert("数据为空或格式无法识别");
+                resetPage();
+                return;
+            }
             analyzeAndRender(data);
-        } catch(err) {
-            alert("解析失败: " + err.message);
+        },
+        error: function(err) {
+            loadingSpinner.style.display = 'none';
+            alert("文件解析失败: " + err.message);
+            resetPage();
         }
-    };
-    reader.readAsText(file);
-}
-
-// 通用 CSV 解析器 (同之前页面)
-function parseCSV(text) {
-    const lines = text.trim().split('\n');
-    if(lines.length < 2) return [];
-    
-    // 自动识别时间列索引
-    const headers = lines[0].toLowerCase().split(',');
-    let timeIndex = -1;
-    // 尝试匹配常见的时间字段名
-    ['time', 'date', 'created_at', 'publish_time', 'timestamp'].forEach(key => {
-        if(timeIndex === -1) timeIndex = headers.findIndex(h => h.includes(key));
     });
-    
-    if(timeIndex === -1) timeIndex = 2; // 默认尝试第3列作为时间
-
-    return lines.slice(1).map(l => {
-        // 简单处理引号内的逗号 (简化版)
-        const arr = l.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/); 
-        const rawDate = arr[timeIndex] ? arr[timeIndex].replace(/"/g, '') : null;
-        return {
-            date: normalizeDate(rawDate)
-        };
-    }).filter(d => d.date !== null);
 }
 
-function normalizeDate(str) {
-    if(!str) return null;
-    str = str.trim();
-    // 尝试解析 YYYY-MM-DD
-    const match = str.match(/\d{4}-\d{2}-\d{2}/);
-    if(match) return match[0];
-    // 处理相对时间 (假设当天)
-    if(str.includes('小时') || str.includes('分')) return new Date().toISOString().slice(0,10);
-    return null; 
-}
-
-// 3. 数据分析与渲染
+// 3. 数据分析
 function analyzeAndRender(data) {
-    // 按日期聚合
     const dateMap = {};
-    data.forEach(d => {
-        dateMap[d.date] = (dateMap[d.date] || 0) + 1;
+    
+    // 智能寻找时间列
+    let timeKey = null;
+    if(data.length > 0) {
+        const keys = Object.keys(data[0]);
+        // 匹配常见的时间字段名
+        timeKey = keys.find(k => k.toLowerCase().match(/(time|date|created_at|publish)/));
+    }
+
+    if(!timeKey) {
+        alert("未能在表头中找到时间相关的字段 (如 time, date, created_at, publish_time)，请检查 CSV。");
+        resetPage();
+        return;
+    }
+
+    // 按日期聚合
+    data.forEach(row => {
+        let rawDate = row[timeKey];
+        let normalizedDate = normalizeDate(rawDate);
+        if(normalizedDate) {
+            dateMap[normalizedDate] = (dateMap[normalizedDate] || 0) + 1;
+        }
     });
 
     const sortedDates = Object.keys(dateMap).sort();
     if(sortedDates.length === 0) {
-        alert("未能在文件中找到有效的时间数据，请检查 CSV。");
+        alert("未能解析出有效的时间格式。");
+        resetPage();
         return;
     }
 
     const counts = sortedDates.map(d => dateMap[d]);
+    // 计算速度 (差值)
+    const velocity = counts.map((val, i) => i === 0 ? 0 : val - counts[i-1]);
 
-    // 计算“速度” (一阶导数模拟)
-    const velocity = counts.map((val, i) => {
-        if(i === 0) return 0;
-        return val - counts[i-1];
-    });
-
-    // 更新界面
-    document.getElementById('upload-card').style.display = 'none';
+    // 更新界面统计数字
     resultSection.style.display = 'block';
-
     document.getElementById('res-total').innerText = data.length.toLocaleString();
     document.getElementById('res-range').innerText = `${sortedDates[0]} 至 ${sortedDates[sortedDates.length-1]}`;
     const maxV = Math.max(...velocity);
     document.getElementById('res-peak').innerText = "+" + maxV;
 
-    // 绘制 ECharts
-    const chart = echarts.init(document.getElementById('main-chart'));
+    // 缓存数据用于主题切换时重绘
+    currentChartData = { dates: sortedDates, counts: counts, velocity: velocity };
+    
+    // 绘制图表
+    renderChart();
+}
+
+function normalizeDate(str) {
+    if(!str) return null;
+    str = String(str).trim();
+    // 尝试解析 YYYY-MM-DD
+    const match = str.match(/\d{4}-\d{2}-\d{2}/);
+    if(match) return match[0];
+    // 处理带小时分钟的模糊匹配归为今天
+    if(str.includes('小时') || str.includes('分')) return new Date().toISOString().slice(0,10);
+    return null; 
+}
+
+// 4. ECharts 渲染函数
+function renderChart() {
+    if (!currentChartData) return;
+
+    const chartDom = document.getElementById('main-chart');
+    // 如果之前有图表实例，先销毁，防止内存泄漏和重影
+    if (chartInstance != null) {
+        chartInstance.dispose();
+    }
+    chartInstance = echarts.init(chartDom);
+
+    // 获取当前主题字体颜色
+    const textColor = document.documentElement.getAttribute('data-theme') === 'dark' ? '#c9d1d9' : '#2c3e50';
+
     const option = {
         tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
         grid: { top: 40, right: 50, bottom: 40, left: 50 },
-        legend: { show: false }, // 使用自定义图例
-        xAxis: { type: 'category', data: sortedDates, boundaryGap: false },
+        legend: { show: false }, 
+        xAxis: { 
+            type: 'category', 
+            data: currentChartData.dates, 
+            boundaryGap: false,
+            axisLabel: { color: textColor }
+        },
         yAxis: [
-            { type: 'value', name: '热度', position: 'left', splitLine: { show: false } },
-            { type: 'value', name: '速度', position: 'right', splitLine: { lineStyle: { type: 'dashed' } } }
+            { 
+                type: 'value', 
+                name: '热度', 
+                position: 'left', 
+                splitLine: { show: false },
+                nameTextStyle: { color: textColor },
+                axisLabel: { color: textColor }
+            },
+            { 
+                type: 'value', 
+                name: '速度', 
+                position: 'right', 
+                splitLine: { lineStyle: { type: 'dashed', color: 'rgba(150,150,150,0.2)' } },
+                nameTextStyle: { color: textColor },
+                axisLabel: { color: textColor }
+            }
         ],
         series: [
             {
                 name: '传播热度',
                 type: 'line',
                 smooth: true,
-                data: counts,
+                data: currentChartData.counts,
                 yAxisIndex: 0,
                 itemStyle: { color: '#0084ff' },
                 areaStyle: { color: new echarts.graphic.LinearGradient(0,0,0,1,[{offset:0,color:'rgba(0,132,255,0.2)'},{offset:1,color:'rgba(0,132,255,0)'}]) }
@@ -243,38 +281,40 @@ function analyzeAndRender(data) {
                 name: '传播速度',
                 type: 'line',
                 smooth: true,
-                data: velocity,
+                data: currentChartData.velocity,
                 yAxisIndex: 1,
                 itemStyle: { color: '#ff8200' },
                 lineStyle: { type: 'dashed', width: 2 }
             }
         ]
     };
-    chart.setOption(option);
-    window.addEventListener('resize', () => chart.resize());
+    chartInstance.setOption(option);
+    window.addEventListener('resize', () => chartInstance.resize());
+}
+
+// 5. 监听全局主题变化
+function observeThemeChange() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-theme') {
+                renderChart(); // 主题切换时重新渲染图表以更改文字颜色
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
 function resetPage() {
     fileInput.value = '';
-    document.getElementById('upload-card').style.display = 'block';
+    uploadCard.style.display = 'block';
     resultSection.style.display = 'none';
-}
-
-// 主题切换逻辑
-document.addEventListener('DOMContentLoaded', () => {
-    const toggleBtn = document.getElementById('theme-toggle');
-    const root = document.documentElement;
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        root.setAttribute('data-theme', 'dark');
+    loadingSpinner.style.display = 'none';
+    currentChartData = null;
+    if (chartInstance != null) {
+        chartInstance.dispose();
+        chartInstance = null;
     }
-    toggleBtn.addEventListener('click', () => {
-        const isDark = root.getAttribute('data-theme') === 'dark';
-        const newTheme = isDark ? 'light' : 'dark';
-        root.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-    });
-});
+}
 </script>
 
 </body>

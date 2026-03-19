@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>学术热点与前沿发现 - 社会雷达</title>
+
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+
+<style>
+  /* 全局样式设定 */
+  :root {
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --text-muted: #7f8c8d;
+    --primary-color: #0084ff;
+    --border-color: #e4e7ed;
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  [data-theme="dark"] {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+    --shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.3s; line-height: 1.6; }
+  a { text-decoration: none; color: inherit; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+  /* 导航栏样式 (适配注入的HTML) */
+  header { background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .nav { display: flex; justify-content: space-between; align-items: center; height: 60px; }
+  .brand { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
+  .menu { display: flex; align-items: center; gap: 20px; font-size: 0.95rem; }
+  .menu a:hover, .menu a.active { color: var(--primary-color); }
+  .theme-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; }
+
+  /* 下拉菜单样式补偿 */
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+  .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
+  .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
+  .dropdown:hover .dropdown-content { display: block; }
+
+  /* 页面头部与布局 */
+  .page-header { text-align: center; padding: 40px 0 30px; }
+  .page-header h1 { font-size: 2.2rem; margin-bottom: 10px; background: linear-gradient(90deg, #0084ff, #00c6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .page-header p { color: var(--text-muted); font-size: 1.1rem; }
+
+  .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 40px; }
+  @media (max-width: 900px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+  /* 卡片组件 */
+  .chart-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); transition: transform 0.3s ease; }
+  .chart-card:hover { transform: translateY(-3px); }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+  .card-header h3 { font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+  .card-header h3::before { content: ''; display: block; width: 4px; height: 18px; background: var(--primary-color); border-radius: 2px; }
+  .chart-container { width: 100%; height: 350px; }
+  .card-footer { margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); text-align: right; }
+
+  .status-bar { text-align: center; padding: 10px; background-color: rgba(0, 132, 255, 0.1); color: var(--primary-color); border-radius: 6px; margin-bottom: 20px; display: none; }
+</style>
+</head>
+
+<body>
+
+<header id="common-header"></header>
+
+<main class="container">
+  <section class="page-header">
+    <h1>学术热点识别与前沿方向发现</h1>
+    <p>依托多源社会网络数据，追踪自动化领域学科前沿，辅助学会研判发展趋势。</p>
+  </section>
+
+  <div id="update-status" class="status-bar">正在从服务器拉取最新数据...</div>
+
+  <div class="dashboard-grid">
+    <div class="chart-card">
+      <div class="card-header"><h3>学术前沿热词图谱</h3></div>
+      <div id="wordcloud-chart" class="chart-container"></div>
+      <div class="card-footer">* 数据来源：GitHub Actions 自动聚合拉取</div>
+    </div>
+
+    <div class="chart-card">
+      <div class="card-header"><h3>核心子学科热度演化趋势</h3></div>
+      <div id="trend-chart" class="chart-container"></div>
+      <div class="card-footer">* 纵轴：基于社交媒体与公开网络的提及频次</div>
+    </div>
+  </div>
+</main>
+
+<script src="../JS/navbar.js"></script>
+
+<script>
+let wordCloudChart, trendChart;
+let globalData = null; // 缓存拉取到的数据
+
+document.addEventListener('DOMContentLoaded', () => {
+    // 初始化 ECharts 实例
+    wordCloudChart = echarts.init(document.getElementById('wordcloud-chart'));
+    trendChart = echarts.init(document.getElementById('trend-chart'));
+    
+    wordCloudChart.showLoading();
+    trendChart.showLoading();
+    document.getElementById('update-status').style.display = 'block';
+
+    // 启动主题变化的全局监听 (替代以前的 initTheme)
+    observeThemeChange();
+
+    // 动态拉取 JSON 数据
+    const jsonUrl = '../data/academic_summary.json?t=' + new Date().getTime(); 
+    
+    fetch(jsonUrl)
+        .then(response => {
+            if (!response.ok) throw new Error('网络响应失败或找不到数据文件');
+            return response.json();
+        })
+        .then(data => {
+            globalData = data;
+            document.getElementById('update-status').innerText = '数据同步完成！最新数据来源于自动化爬虫集群。';
+            setTimeout(() => { document.getElementById('update-status').style.display = 'none'; }, 3000);
+            
+            wordCloudChart.hideLoading();
+            trendChart.hideLoading();
+            
+            // 渲染图表
+            renderWordCloud(globalData.wordCloud);
+            renderTrendChart(globalData.trendData);
+        })
+        .catch(error => {
+            console.error('获取数据失败:', error);
+            document.getElementById('update-status').innerText = '拉取数据失败，请确保生成脚本已运行并生成了 JSON 文件。';
+            document.getElementById('update-status').style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+            document.getElementById('update-status').style.color = 'red';
+            wordCloudChart.hideLoading();
+            trendChart.hideLoading();
+        });
+
+    // 监听窗口大小变化
+    window.addEventListener('resize', () => {
+        wordCloudChart.resize();
+        trendChart.resize();
+    });
+});
+
+// 3. 监听全局主题变化以更新图表颜色
+function observeThemeChange() {
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            // 当 html 标签上的 data-theme 属性发生改变时，重新渲染图表
+            if (mutation.attributeName === 'data-theme') {
+                if (globalData) {
+                    renderWordCloud(globalData.wordCloud);
+                    renderTrendChart(globalData.trendData);
+                }
+            }
+        });
+    });
+    
+    observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['data-theme']
+    });
+}
+
+function getTextColor() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? '#c9d1d9' : '#2c3e50';
+}
+
+function renderWordCloud(wordData) {
+    const option = {
+        tooltip: { show: true },
+        series: [{
+            type: 'wordCloud',
+            shape: 'circle',
+            keepAspect: false,
+            left: 'center', top: 'center', right: 'center', bottom: 'center',
+            sizeRange: [12, 60],
+            rotationRange: [-45, 45],
+            rotationStep: 45,
+            gridSize: 8,
+            textStyle: {
+                fontFamily: 'sans-serif',
+                fontWeight: 'bold',
+                color: function () {
+                    return 'rgb(' + [
+                        Math.round(Math.random() * 160) + 50,
+                        Math.round(Math.random() * 160) + 50,
+                        Math.round(Math.random() * 200) + 55
+                    ].join(',') + ')';
+                }
+            },
+            emphasis: { focus: 'self', textStyle: { textShadowBlur: 10, textShadowColor: '#333' } },
+            data: wordData
+        }]
+    };
+    wordCloudChart.setOption(option);
+}
+
+function renderTrendChart(trendData) {
+    const textColor = getTextColor();
+    const colors = ['#ff2442', '#0084ff', '#07C160', '#f1c40f', '#8e44ad'];
+
+    const option = {
+        tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+        legend: { 
+            data: trendData.series.map(s => s.name), 
+            textStyle: { color: textColor },
+            bottom: 0 
+        },
+        grid: { left: '3%', right: '4%', bottom: '12%', top: '5%', containLabel: true },
+        xAxis: {
+            type: 'category',
+            boundaryGap: false,
+            data: trendData.years,
+            axisLabel: { color: textColor }
+        },
+        yAxis: {
+            type: 'value',
+            name: '热度指数 (提及频次)',
+            nameTextStyle: { color: textColor },
+            axisLabel: { color: textColor },
+            splitLine: { lineStyle: { type: 'dashed', color: 'rgba(150,150,150,0.2)' } }
+        },
+        series: trendData.series.map((item, index) => ({
+            name: item.name,
+            type: 'line',
+            smooth: true,
+            symbolSize: 8,
+            itemStyle: { color: colors[index % colors.length] },
+            data: item.data
+        }))
+    };
+    trendChart.setOption(option);
+}
+</script>
+
+</body>
+</html>

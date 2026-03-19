@@ -5,33 +5,52 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>研究成果 - 社会雷达</title>
 <link rel="stylesheet" href="../CSS/work.css">
+
+<style>
+  /* 全局样式基础变量补偿 (如果在 work.css 里没写全的话) */
+  :root {
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --text-muted: #7f8c8d;
+    --primary-color: #0084ff;
+    --border-color: #e4e7ed;
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  [data-theme="dark"] {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+    --shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.3s; }
+  
+  /* 导航栏样式补充 (适配 navbar.js) */
+  header { background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .nav { display: flex; justify-content: space-between; align-items: center; height: 60px; }
+  .brand { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
+  .menu { display: flex; align-items: center; gap: 20px; font-size: 0.95rem; }
+  .menu a { text-decoration: none; color: inherit; }
+  .menu a:hover, .menu a.active { color: var(--primary-color); }
+  .theme-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; }
+
+  /* 下拉菜单补充 */
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+  .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
+  .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
+  .dropdown:hover .dropdown-content { display: block; }
+</style>
+
 </head>
 
 <body>
 
-<header>
-  <div class="container nav">
-    <div class="brand">社会雷达 · Social Radar</div>
-    <div class="menu">
-      <a href="../index.html">首页</a>
-      <div class="dropdown">
-        <a href="javascript:void(0)" class="dropbtn">数据分析</a>
-        <div class="dropdown-content">
-          <a href="zhihu_data.html">知乎</a>
-          <a href="weibo_data.html">微信公众号</a>
-          <a href="xiaohongshu.html">小红书</a>
-        </div>
-      </div>
-      <a href="analysis.html">CSV分析</a>
-      <a href="work.html" class="active">我们的工作</a>
-      
-      <button id="theme-toggle" class="btn-icon" title="切换主题">
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-      </button>
-    </div>
-  </div>
-</header>
+<header id="common-header"></header>
 
 <main class="container">
 
@@ -159,28 +178,14 @@
 
 </main>
 
+<script src="../JS/navbar.js"></script>
+
 <script>
+// 仅保留页面本身需要的特殊交互逻辑
 function toggleBib(id) {
   const el = document.getElementById('bib-' + id);
   el.classList.toggle('active');
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    const toggleBtn = document.getElementById('theme-toggle');
-    const root = document.documentElement;
-    const savedTheme = localStorage.getItem('theme');
-    
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        root.setAttribute('data-theme', 'dark');
-    }
-
-    toggleBtn.addEventListener('click', () => {
-        const isDark = root.getAttribute('data-theme') === 'dark';
-        const newTheme = isDark ? 'light' : 'dark';
-        root.setAttribute('data-theme', newTheme);
-        localStorage.setItem('theme', newTheme);
-    });
-});
 </script>
 
 </body>
