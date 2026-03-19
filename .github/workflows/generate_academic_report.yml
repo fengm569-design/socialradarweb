@@ -3,8 +3,6 @@ name: Generate Academic Report
 on:
   workflow_dispatch:
   schedule:
-    # 每天北京时间 / 新加坡时间 08:00 自动运行
-    # GitHub Actions 的 cron 使用 UTC，这里 00:00 UTC = UTC+8 的 08:00
     - cron: '0 0 * * *'
 
 jobs:
@@ -28,7 +26,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: 'pip'
 
       - name: Install dependencies
         run: |
