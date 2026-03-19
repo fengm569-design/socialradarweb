@@ -3,8 +3,8 @@ name: Generate Academic Report
 on:
   workflow_dispatch:
   schedule:
-    # 每天北京时间 / 新加坡时间 08:00 运行
-    # GitHub Actions 的 schedule 使用 UTC
+    # 每天北京时间 / 新加坡时间 08:00 自动运行
+    # GitHub Actions 的 cron 使用 UTC，这里 00:00 UTC = UTC+8 的 08:00
     - cron: '0 0 * * *'
 
 jobs:
@@ -13,6 +13,10 @@ jobs:
 
     permissions:
       contents: write
+
+    concurrency:
+      group: generate-academic-report
+      cancel-in-progress: false
 
     steps:
       - name: Checkout repository
@@ -24,17 +28,36 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pandas
 
-      - name: Run report script
+      - name: Ensure data directory exists
         run: |
+          mkdir -p data
+
+      - name: Run academic report script
+        run: |
+          echo "Running report generation..."
           python scripts/generate_academic_report.py
 
-      - name: Commit and push result
+      - name: Verify output file exists
+        run: |
+          if [ ! -f data/academic_summary.json ]; then
+            echo "Error: data/academic_summary.json was not generated."
+            exit 1
+          fi
+          echo "Output file exists."
+
+      - name: Show git status
+        run: |
+          git status
+          ls -l data/academic_summary.json
+
+      - name: Commit and push if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -42,7 +65,7 @@ jobs:
           git add data/academic_summary.json
 
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No changes detected. Nothing to commit."
           else
             git commit -m "auto: update academic summary"
             git push
