@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>研究成果 - 社会雷达</title>
+<link rel="stylesheet" href="../CSS/work.css">
+
+<style>
+  /* 全局样式基础变量补偿 (如果在 work.css 里没写全的话) */
+  :root {
+    --bg-color: #f5f7fa;
+    --card-bg: #ffffff;
+    --text-main: #2c3e50;
+    --text-muted: #7f8c8d;
+    --primary-color: #0084ff;
+    --border-color: #e4e7ed;
+    --shadow: 0 4px 12px rgba(0,0,0,0.05);
+  }
+
+  [data-theme="dark"] {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --text-main: #c9d1d9;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+    --shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+
+  body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.3s; }
+  
+  /* 导航栏样式补充 (适配 navbar.js) */
+  header { background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
+  .nav { display: flex; justify-content: space-between; align-items: center; height: 60px; }
+  .brand { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
+  .menu { display: flex; align-items: center; gap: 20px; font-size: 0.95rem; }
+  .menu a { text-decoration: none; color: inherit; }
+  .menu a:hover, .menu a.active { color: var(--primary-color); }
+  .theme-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; }
+
+  /* 下拉菜单补充 */
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+  .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
+  .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
+  .dropdown:hover .dropdown-content { display: block; }
+</style>
+
+</head>
+
+<body>
+
+<header id="common-header"></header>
+
+<main class="container">
+
+  <section class="page-header">
+    <h1>研究体系与成果</h1>
+    <p class="subtitle">Exploring Collective Intelligence through Social Doppler Effects</p>
+  </section>
+
+  <section class="roadmap-section">
+    <div class="roadmap-tree">
+        <div class="level-1">
+            <div class="node root">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                社会雷达 (Social Radar)
+            </div>
+        </div>
+        
+        <div class="level-2-container">
+            <div class="branch">
+                <div class="node">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 20h.01"/><path d="M7 20v-4"/><path d="M12 20v-8"/><path d="M17 20V8"/><path d="M22 4v16"/></svg>
+                    理论基础
+                </div>
+            </div>
+            <div class="branch">
+                <div class="node">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 14 15 20 9"/><line x1="12" y1="19" x2="12" y2="5"/></svg>
+                    核心算法
+                </div>
+            </div>
+            <div class="branch">
+                <div class="node">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    应用场景
+                </div>
+            </div>
+        </div>
+    </div>
+  </section>
+
+  <section class="papers-container">
+      
+      <article class="paper-card">
+        <div class="paper-meta">
+            <span class="badge journal">科技导报 (Science & Technology Review)</span>
+            <span class="paper-date">2025</span>
+        </div>
+        
+        <h2 class="paper-title">面向无人系统的具身社会感知智能：流程与框架</h2>
+        
+        <p class="paper-authors">
+          <strong>范丽丽</strong>, 史光宇, 陈恺舸, 李创, 曾昌贤, 邓方
+        </p>
+
+        <div class="paper-abstract">
+          自主智能无人系统在动态复杂、多主体耦合、信息不完备且社会约束强的真实开放环境中运行时，面临合规性建模不足、社会风险感知受限、协同冲突突出及异常响应滞后等关键挑战。为此，提出一种具身社会感知智能框架，该框架将具身感知（本体、内部、外部、交互和意图）与社会雷达融合，并引入代理式人工智能（Agentic AI）作为顶层决策与控制机制，实现多层级、自主化的认知决策。
+        </div>
+
+        <div class="paper-actions">
+          <a href="../papers/Embodied social perception intelligence for unmanned systems_ Workflow and framework.pdf" class="btn btn-primary" target="_blank" download>
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载 PDF
+          </a>
+          <button class="btn btn-secondary" onclick="toggleBib(1)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/><path d="M20 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/></svg>
+            BibTeX
+          </button>
+        </div>
+
+        <div id="bib-1" class="bibtex-box">
+<pre>@article{fan2025embodied,
+  title={面向无人系统的具身社会感知智能：流程与框架},
+  author={范丽丽 and 史光宇 and 陈恺舸 and 李创 and 曾昌贤 and 邓方},
+  journal={科技导报},
+  volume={43},
+  number={20},
+  year={2025}
+}</pre>
+        </div>
+      </article>
+
+      <article class="paper-card">
+        <div class="paper-meta">
+            <span class="badge preprint">IEEE MESA</span>
+            <span class="paper-date">2025</span>
+        </div>
+
+        <h2 class="paper-title">Social Doppler: A Framework for Mechatronic Perception Beyond Physical Radar</h2>
+        
+        <p class="paper-authors">
+          <strong>Lili Fan</strong>, Guangyu Shi, Liyuan Fan, Hetian Chen, Wei Wang, Zhaojie Wang
+        </p>
+
+        <div class="paper-abstract">
+          本文提出了一种超越传统物理雷达的新型机电感知框架——社会多普勒（Social Doppler）。通过将物理波的传播模型映射到网络信息流中，为系统提供了对社会事件动态传播速度与热度演化的量化感知能力，在复杂社会物理信息系统（CPSS）中实现了更高维度的环境感知与预测能力。
+        </div>
+
+        <div class="paper-actions">
+          <a href="../papers/Social_Doppler_A_Framework_for_Mechatronic_Perception_Beyond_Physical_Radar.pdf" class="btn btn-primary" target="_blank" download>
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载 PDF
+          </a>
+          <button class="btn btn-secondary" onclick="toggleBib(2)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/><path d="M20 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/></svg>
+            BibTeX
+          </button>
+        </div>
+
+        <div id="bib-2" class="bibtex-box">
+<pre>@inproceedings{fan2025socialdoppler,
+  title={Social Doppler: A Framework for Mechatronic Perception Beyond Physical Radar},
+  author={Fan, Lili and Shi, Guangyu and Fan, Liyuan and Chen, Hetian and Wang, Wei and Wang, Zhaojie},
+  booktitle={2025 21st IEEE International Conference on Mechatronic and Embedded Systems and Applications (MESA)},
+  year={2025},
+  organization={IEEE}
+}</pre>
+        </div>
+      </article>
+
+      <article class="paper-card">
+        <div class="paper-meta">
+            <span class="badge journal">IEEE/CAA Journal of Automatica Sinica</span>
+            <span class="paper-date">2024</span>
+        </div>
+
+        <h2 class="paper-title">Social Radars: Finding Targets in Cyberspace for Cybersecurity</h2>
+        
+        <p class="paper-authors">
+          <strong>Lili Fan</strong>, Changxian Zeng, Yutong Wang, Jiaqi Ma, Fei-Yue Wang
+        </p>
+
+        <div class="paper-abstract">
+          在网络安全成为全球焦点的背景下，本文深入探讨了“社会雷达（Social Radar）”在网络空间中的应用。社会雷达模拟了物理雷达收集和处理信息的机制，能够敏锐地感知内部和外部环境的舆情动态，并帮助智能系统在网络空间中精准发现异常目标与潜在风险，从而迅速调整安全防御策略。
+        </div>
+
+        <div class="paper-actions">
+          <a href="../papers/Social_Radars_Finding_Targets_in_Cyberspace_for_Cybersecurity.pdf" class="btn btn-primary" target="_blank" download>
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载 PDF
+          </a>
+          <button class="btn btn-secondary" onclick="toggleBib(3)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/><path d="M20 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/></svg>
+            BibTeX
+          </button>
+        </div>
+
+        <div id="bib-3" class="bibtex-box">
+<pre>@article{fan2024socialradars,
+  title={Social Radars: Finding Targets in Cyberspace for Cybersecurity},
+  author={Fan, Lili and Zeng, Changxian and Wang, Yutong and Ma, Jiaqi and Wang, Fei-Yue},
+  journal={IEEE/CAA Journal of Automatica Sinica},
+  volume={11},
+  number={2},
+  pages={279--282},
+  year={2024},
+  publisher={IEEE}
+}</pre>
+        </div>
+      </article>
+
+      <article class="paper-card">
+        <div class="paper-meta">
+            <span class="badge preprint">IEEE MESA</span>
+            <span class="paper-date">2025</span>
+        </div>
+
+        <h2 class="paper-title">VLAS: From Individual to Social Intelligence via Social Radar-Augmented VLA Agents</h2>
+        
+        <p class="paper-authors">
+          <strong>Lili Fan</strong>, Zeming Jin, Liyuan Fan, Wei Wang, Levente Kovacs
+        </p>
+
+        <div class="paper-abstract">
+          视觉-语言-动作（VLA）模型的最新进展使具身智能体能够以端到端的方式感知视觉场景、遵循自然语言指令并执行底层控制。本文提出了 VLAS 框架，通过引入“社会雷达（Social Radar）”增强 VLA 智能体的感知维度，使其突破单一个体智能的局限，向具备群体协同和复杂社会交互能力的社会智能（Social Intelligence）演进。
+        </div>
+
+        <div class="paper-actions">
+          <a href="../papers/VLAS_From_Individual_to_Social_Intelligence_via_Social_Radar-Augmented_VLA_Agents.pdf" class="btn btn-primary" target="_blank" download>
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            下载 PDF
+          </a>
+          <button class="btn btn-secondary" onclick="toggleBib(4)">
+            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M10 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/><path d="M20 11h-4a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v6c0 .5-.5 1-1 1h-4"/></svg>
+            BibTeX
+          </button>
+        </div>
+
+        <div id="bib-4" class="bibtex-box">
+<pre>@inproceedings{fan2025vlas,
+  title={VLAS: From Individual to Social Intelligence via Social Radar-Augmented VLA Agents},
+  author={Fan, Lili and Jin, Zeming and Fan, Liyuan and Wang, Wei and Kovacs, Levente},
+  booktitle={2025 21st IEEE International Conference on Mechatronic and Embedded Systems and Applications (MESA)},
+  year={2025},
+  organization={IEEE}
+}</pre>
+        </div>
+      </article>
+
+  </section>
+
+</main>
+
+<script src="../JS/navbar.js"></script>
+
+<script>
+// 仅保留页面本身需要的特殊交互逻辑 (展开/折叠 BibTeX)
+function toggleBib(id) {
+  const el = document.getElementById('bib-' + id);
+  el.classList.toggle('active');
+}
+</script>
+
+</body>
+</html>
