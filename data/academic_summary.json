@@ -1,91 +1,365 @@
 {
   "wordCloud": [
     {
-      "name": "无人系统",
-      "value": 1
+      "name": "AI",
+      "value": 48
     },
     {
-      "name": "智能控制",
-      "value": 5
+      "name": "NiceHash",
+      "value": 44
     },
     {
-      "name": "工业互联网",
-      "value": 1
+      "name": "data",
+      "value": 30
     },
     {
-      "name": "自动驾驶",
-      "value": 1
+      "name": "control",
+      "value": 28
+    },
+    {
+      "name": "based",
+      "value": 26
+    },
+    {
+      "name": "models",
+      "value": 25
+    },
+    {
+      "name": "systems",
+      "value": 23
+    },
+    {
+      "name": "learning",
+      "value": 20
+    },
+    {
+      "name": "model",
+      "value": 20
+    },
+    {
+      "name": "system",
+      "value": 20
+    },
+    {
+      "name": "any",
+      "value": 19
+    },
+    {
+      "name": "embodied",
+      "value": 19
+    },
+    {
+      "name": "these",
+      "value": 19
+    },
+    {
+      "name": "research",
+      "value": 18
+    },
+    {
+      "name": "language",
+      "value": 18
+    },
+    {
+      "name": "such",
+      "value": 17
+    },
+    {
+      "name": "power",
+      "value": 16
+    },
+    {
+      "name": "IIoT",
+      "value": 15
+    },
+    {
+      "name": "BCI",
+      "value": 15
+    },
+    {
+      "name": "performance",
+      "value": 15
+    },
+    {
+      "name": "time",
+      "value": 15
+    },
+    {
+      "name": "large",
+      "value": 14
+    },
+    {
+      "name": "their",
+      "value": 14
+    },
+    {
+      "name": "tasks",
+      "value": 14
+    },
+    {
+      "name": "human",
+      "value": 14
+    },
+    {
+      "name": "intelligent",
+      "value": 14
+    },
+    {
+      "name": "use",
+      "value": 14
+    },
+    {
+      "name": "LLMs",
+      "value": 13
+    },
+    {
+      "name": "world",
+      "value": 13
+    },
+    {
+      "name": "paper",
+      "value": 13
+    },
+    {
+      "name": "applications",
+      "value": 13
+    },
+    {
+      "name": "also",
+      "value": 12
+    },
+    {
+      "name": "real",
+      "value": 12
+    },
+    {
+      "name": "Web",
+      "value": 12
+    },
+    {
+      "name": "using",
+      "value": 12
+    },
+    {
+      "name": "challenges",
+      "value": 12
+    },
+    {
+      "name": "our",
+      "value": 12
+    },
+    {
+      "name": "other",
+      "value": 11
+    },
+    {
+      "name": "information",
+      "value": 11
+    },
+    {
+      "name": "been",
+      "value": 11
+    },
+    {
+      "name": "your",
+      "value": 11
+    },
+    {
+      "name": "more",
+      "value": 11
+    },
+    {
+      "name": "will",
+      "value": 11
+    },
+    {
+      "name": "its",
+      "value": 11
+    },
+    {
+      "name": "new",
+      "value": 11
+    },
+    {
+      "name": "into",
+      "value": 11
+    },
+    {
+      "name": "generative",
+      "value": 10
+    },
+    {
+      "name": "network",
+      "value": 10
+    },
+    {
+      "name": "autonomous",
+      "value": 10
+    },
+    {
+      "name": "including",
+      "value": 10
+    },
+    {
+      "name": "training",
+      "value": 10
+    },
+    {
+      "name": "high",
+      "value": 10
+    },
+    {
+      "name": "proposed",
+      "value": 10
+    },
+    {
+      "name": "framework",
+      "value": 10
+    },
+    {
+      "name": "brain",
+      "value": 10
+    },
+    {
+      "name": "used",
+      "value": 10
+    },
+    {
+      "name": "through",
+      "value": 10
+    },
+    {
+      "name": "methods",
+      "value": 10
+    },
+    {
+      "name": "Hashing",
+      "value": 10
+    },
+    {
+      "name": "results",
+      "value": 10
+    },
+    {
+      "name": "具身智能",
+      "value": 85
     },
     {
       "name": "脑机接口",
-      "value": 1
+      "value": 85
+    },
+    {
+      "name": "大语言模型",
+      "value": 85
+    },
+    {
+      "name": "无人系统",
+      "value": 85
+    },
+    {
+      "name": "类脑计算",
+      "value": 85
+    },
+    {
+      "name": "生成式AI",
+      "value": 85
+    },
+    {
+      "name": "智能控制",
+      "value": 85
+    },
+    {
+      "name": "工业互联网",
+      "value": 85
     }
   ],
   "trendData": {
     "years": [
-      "1",
-      "2014",
-      "2016",
-      "2017",
-      "2018",
-      "2019",
-      "2020",
-      "2021",
       "2022",
       "2023",
       "2024",
-      "2025"
+      "2025",
+      "2026"
     ],
     "series": [
       {
         "name": "具身智能",
         "data": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          2,
+          7,
+          20,
+          38,
+          51
+        ]
+      },
+      {
+        "name": "脑机接口",
+        "data": [
+          8,
+          7,
+          4,
+          5,
           0
         ]
       },
       {
         "name": "大语言模型",
         "data": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
+          11,
+          47,
+          10,
+          4,
+          0
+        ]
+      },
+      {
+        "name": "无人系统",
+        "data": [
+          9,
+          6,
+          4,
+          6,
+          0
+        ]
+      },
+      {
+        "name": "类脑计算",
+        "data": [
+          3,
+          1,
+          6,
+          4,
+          2
+        ]
+      },
+      {
+        "name": "生成式AI",
+        "data": [
+          3,
+          19,
+          11,
+          30,
           0
         ]
       },
       {
         "name": "智能控制",
         "data": [
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          0,
-          2,
-          0,
-          1,
-          1
+          5,
+          11,
+          3,
+          3,
+          2
+        ]
+      },
+      {
+        "name": "工业互联网",
+        "data": [
+          10,
+          27,
+          13,
+          3,
+          0
         ]
       }
     ]
