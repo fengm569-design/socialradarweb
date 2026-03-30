@@ -1,69 +1,39 @@
-name: Generate Academic Report
+name: Update Academic Report
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 1 * * *'   # 每天 UTC 01:00，即北京时间/新加坡时间 09:00
+  workflow_dispatch:
 
 jobs:
-  generate-report:
+  update-report:
     runs-on: ubuntu-latest
 
     permissions:
       contents: write
 
-    concurrency:
-      group: generate-academic-report
-      cancel-in-progress: false
-
     steps:
-      - name: Checkout repository
+      - name: 拉取仓库代码
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Set up Python
+      - name: 配置 Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: 安装依赖
         run: |
           python -m pip install --upgrade pip
           pip install pandas
 
-      - name: Ensure data directory exists
+      - name: 运行报告脚本
         run: |
-          mkdir -p data
-
-      - name: Run academic report script
-        run: |
-          echo "Running report generation..."
           python scripts/generate_academic_report.py
 
-      - name: Verify output file exists
-        run: |
-          if [ ! -f data/academic_summary.json ]; then
-            echo "Error: data/academic_summary.json was not generated."
-            exit 1
-          fi
-          echo "Output file exists."
-
-      - name: Show git status
-        run: |
-          git status
-          ls -l data/academic_summary.json
-
-      - name: Commit and push if changed
+      - name: 提交更新结果
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add data/academic_summary.json
-
-          if git diff --cached --quiet; then
-            echo "No changes detected. Nothing to commit."
-          else
-            git commit -m "auto: update academic summary"
-            git push
-          fi
+          git diff --cached --quiet || git commit -m "Auto update academic summary"
+          git push
