@@ -185,7 +185,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     observeThemeChange();
 
-    // 动态拉取 JSON 数据
     const jsonUrl = '../data/academic_summary.json?t=' + new Date().getTime(); 
     
     fetch(jsonUrl)
@@ -194,6 +193,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.json();
         })
         .then(data => {
+            
+            // 💡 核心修复 1：智能数据过滤器
+            // 定义规则：只保留包含中文的词汇，或者像 "AI", "GPT" 这种纯英文的专用名词。过滤掉无意义的英文。
+            const isValidWord = (str) => {
+                if (/[\u4e00-\u9fa5]/.test(str)) return true; // 包含中文，保留
+                if (['AI', 'GPT', 'AIGC', 'CHATGPT'].includes(str.toUpperCase())) return true; // 专业词汇，保留
+                return false; // 其他纯英文无意义单词，剔除
+            };
+
+            // 过滤词云数据
+            data.wordCloud = data.wordCloud.filter(item => isValidWord(item.name));
+            
+            // 过滤趋势折线图数据，并且【最多只截取前 8 个】，确保图例完美展示在两行
+            data.trendData.series = data.trendData.series.filter(item => isValidWord(item.name)).slice(0, 8);
+
             globalData = data;
             document.getElementById('update-status').innerText = '✅ NLP 模型分析完成！数据已同步。';
             setTimeout(() => { document.getElementById('update-status').style.display = 'none'; }, 3000);
@@ -293,8 +307,7 @@ function renderTrendChart(trendData) {
     const theme = getThemeColors();
     const colors = [
         '#ff2442', '#0084ff', '#07C160', '#f1c40f', '#8e44ad', 
-        '#e67e22', '#1abc9c', '#34495e', '#d35400', '#2980b9', 
-        '#c0392b', '#16a085', '#8e44ad', '#27ae60', '#f39c12'
+        '#e67e22', '#1abc9c', '#34495e', '#d35400', '#2980b9'
     ];
 
     const option = {
@@ -303,9 +316,9 @@ function renderTrendChart(trendData) {
             data: trendData.series.map(s => s.name), 
             textStyle: { color: theme.text }, 
             top: 0,
-            // 💡 【核心修改】：去掉了 type: 'scroll'，增加 width 限制，让图例自动换行为两行或多行
-            width: '85%', 
-            itemGap: 15 // 增加图例之间的间距，看起来更舒展
+            width: '90%', // 限制宽度使其折行
+            itemGap: 18,  // 拉开词与词的距离
+            itemWidth: 16 // 控制图例横线长度
         },
         toolbox: {
             feature: {
@@ -314,8 +327,8 @@ function renderTrendChart(trendData) {
             },
             iconStyle: { borderColor: theme.text }
         },
-        // 💡 【核心修改】：将 top 值从 15% 增加到 22%，给多行图例留出充足的空间，防止和折线重叠
-        grid: { left: '3%', right: '4%', bottom: '15%', top: '22%', containLabel: true },
+        // 💡 核心修复 2：将 top 拉大到 25%，给两行图例留出绝对充足的空间，不再压住折线图
+        grid: { left: '3%', right: '4%', bottom: '15%', top: '25%', containLabel: true },
         dataZoom: [
             { type: 'inside', start: 0, end: 100 },
             { start: 0, end: 100, textStyle: { color: theme.text } }
