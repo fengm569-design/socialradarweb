@@ -193,21 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.json();
         })
         .then(data => {
-            
-            // 💡 核心修复 1：智能数据过滤器
-            // 定义规则：只保留包含中文的词汇，或者像 "AI", "GPT" 这种纯英文的专用名词。过滤掉无意义的英文。
-            const isValidWord = (str) => {
-                if (/[\u4e00-\u9fa5]/.test(str)) return true; // 包含中文，保留
-                if (['AI', 'GPT', 'AIGC', 'CHATGPT'].includes(str.toUpperCase())) return true; // 专业词汇，保留
-                return false; // 其他纯英文无意义单词，剔除
-            };
-
-            // 过滤词云数据
-            data.wordCloud = data.wordCloud.filter(item => isValidWord(item.name));
-            
-            // 过滤趋势折线图数据，并且【最多只截取前 8 个】，确保图例完美展示在两行
-            data.trendData.series = data.trendData.series.filter(item => isValidWord(item.name)).slice(0, 8);
-
+            // 直接采用原始数据，移除前端的 JS 单词过滤，原汁原味展示 JSON 中的数据
             globalData = data;
             document.getElementById('update-status').innerText = '✅ NLP 模型分析完成！数据已同步。';
             setTimeout(() => { document.getElementById('update-status').style.display = 'none'; }, 3000);
@@ -274,6 +260,21 @@ function getThemeColors() {
 }
 
 function renderWordCloud(wordData) {
+    const fixedPalette = [
+        '#0084ff', '#00c6ff', '#1abc9c', '#8e44ad', '#2980b9',
+        '#e67e22', '#d35400', '#c0392b', '#16a085', '#27ae60'
+    ];
+
+    const staticWordData = wordData.map((item, index) => {
+        return {
+            name: item.name,
+            value: item.value,
+            textStyle: {
+                color: fixedPalette[index % fixedPalette.length]
+            }
+        };
+    });
+
     const option = {
         tooltip: { show: true, formatter: '{b} <br/> 算法权重 (TF-IDF): {c}' },
         series: [{
@@ -281,23 +282,16 @@ function renderWordCloud(wordData) {
             shape: 'circle',
             keepAspect: false,
             left: 'center', top: 'center', right: 'center', bottom: 'center',
-            sizeRange: [12, 65],
-            rotationRange: [-45, 45],
+            sizeRange: [14, 65],
+            rotationRange: [-45, 45], 
             rotationStep: 45,
             gridSize: 8,
             textStyle: {
                 fontFamily: 'sans-serif',
-                fontWeight: 'bold',
-                color: function () {
-                    return 'rgb(' + [
-                        Math.round(Math.random() * 100),
-                        Math.round(Math.random() * 150) + 50,
-                        Math.round(Math.random() * 150) + 100
-                    ].join(',') + ')';
-                }
+                fontWeight: 'bold'
             },
             emphasis: { focus: 'self', textStyle: { textShadowBlur: 10, textShadowColor: '#333' } },
-            data: wordData
+            data: staticWordData
         }]
     };
     wordCloudChart.setOption(option);
@@ -316,9 +310,8 @@ function renderTrendChart(trendData) {
             data: trendData.series.map(s => s.name), 
             textStyle: { color: theme.text }, 
             top: 0,
-            width: '90%', // 限制宽度使其折行
-            itemGap: 18,  // 拉开词与词的距离
-            itemWidth: 16 // 控制图例横线长度
+            width: '80%', // 限制图例宽度以强制自然换行
+            itemGap: 15
         },
         toolbox: {
             feature: {
@@ -327,8 +320,8 @@ function renderTrendChart(trendData) {
             },
             iconStyle: { borderColor: theme.text }
         },
-        // 💡 核心修复 2：将 top 拉大到 25%，给两行图例留出绝对充足的空间，不再压住折线图
-        grid: { left: '3%', right: '4%', bottom: '15%', top: '25%', containLabel: true },
+        // 核心修改：使用固定的像素高度 (top: 85) 来确保上方留有足够的空间容纳多行图例
+        grid: { left: '3%', right: '4%', bottom: '15%', top: 85, containLabel: true },
         dataZoom: [
             { type: 'inside', start: 0, end: 100 },
             { start: 0, end: 100, textStyle: { color: theme.text } }
