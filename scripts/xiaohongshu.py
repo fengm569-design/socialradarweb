@@ -11,10 +11,8 @@ COZE_API_TOKEN = 'cztei_hLO8RsmuBFu94A3ksz3gYDQIRxak4qtqUSktwb9e0Bsimb4nz9brynEZ
 WORKFLOW_ID = '7603685878149660718'
 
 INPUT_KEYWORDS = [
-    "自动化学会", "王飞跃", "杨孟飞", "郑南宁", "张楠",
-    "高会军", "侯增广", "孙彦广", "辛景民", "阳春华", "袁利",
-    "张承慧", "赵延龙", "周杰", "陈杰", "戴琼海", "桂卫华",
-    "郭雷", "何友", "蒋昌俊", "李少远", "钱锋"
+    "自动化学会", "王飞跃", "杨孟飞", "郑南宁",
+    "高会军", "张承慧", "戴琼海",  "何友"
 ]
 
 CSV_FILENAME = "xiaohongshu_data.csv"
