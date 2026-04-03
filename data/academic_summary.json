@@ -2,242 +2,78 @@
   "wordCloud": [
     {
       "name": "AI",
-      "value": 38
+      "value": 41
     },
     {
-      "name": "models",
+      "name": "深度学习",
       "value": 32
     },
     {
-      "name": "based",
-      "value": 32
+      "name": "控制理论",
+      "value": 29
     },
     {
-      "name": "model",
-      "value": 28
+      "name": "神经网络",
+      "value": 29
     },
     {
-      "name": "data",
-      "value": 27
-    },
-    {
-      "name": "learning",
-      "value": 24
-    },
-    {
-      "name": "systems",
-      "value": 22
-    },
-    {
-      "name": "framework",
-      "value": 19
-    },
-    {
-      "name": "performance",
-      "value": 19
-    },
-    {
-      "name": "language",
-      "value": 19
-    },
-    {
-      "name": "IIoT",
+      "name": "生成式框架",
       "value": 18
     },
     {
-      "name": "control",
-      "value": 18
-    },
-    {
-      "name": "brain",
+      "name": "底层架构",
       "value": 17
     },
     {
-      "name": "time",
-      "value": 17
+      "name": "群体智能",
+      "value": 10
     },
     {
-      "name": "real",
-      "value": 16
+      "name": "目标检测",
+      "value": 10
     },
     {
-      "name": "large",
-      "value": 16
+      "name": "自主导航",
+      "value": 10
     },
     {
-      "name": "across",
-      "value": 16
+      "name": "系统架构",
+      "value": 10
     },
     {
-      "name": "such",
-      "value": 16
+      "name": "边缘计算",
+      "value": 10
     },
     {
-      "name": "tasks",
-      "value": 16
+      "name": "机器学习",
+      "value": 10
     },
     {
-      "name": "these",
-      "value": 15
-    },
-    {
-      "name": "research",
-      "value": 15
-    },
-    {
-      "name": "embodied",
-      "value": 15
-    },
-    {
-      "name": "LLMs",
-      "value": 15
-    },
-    {
-      "name": "high",
-      "value": 14
-    },
-    {
-      "name": "while",
-      "value": 14
-    },
-    {
-      "name": "their",
-      "value": 14
-    },
-    {
-      "name": "paper",
-      "value": 14
-    },
-    {
-      "name": "system",
-      "value": 14
-    },
-    {
-      "name": "training",
-      "value": 14
-    },
-    {
-      "name": "BCI",
-      "value": 14
-    },
-    {
-      "name": "into",
-      "value": 13
-    },
-    {
-      "name": "using",
-      "value": 13
-    },
-    {
-      "name": "human",
-      "value": 13
-    },
-    {
-      "name": "network",
-      "value": 12
-    },
-    {
-      "name": "applications",
-      "value": 12
-    },
-    {
-      "name": "results",
-      "value": 12
-    },
-    {
-      "name": "EEG",
-      "value": 12
-    },
-    {
-      "name": "multi",
-      "value": 12
-    },
-    {
-      "name": "our",
-      "value": 12
-    },
-    {
-      "name": "world",
-      "value": 12
-    },
-    {
-      "name": "also",
-      "value": 12
-    },
-    {
-      "name": "state",
-      "value": 11
-    },
-    {
-      "name": "However",
-      "value": 11
-    },
-    {
-      "name": "proposed",
-      "value": 11
-    },
-    {
-      "name": "propose",
-      "value": 11
+      "name": "优化算法",
+      "value": 10
     },
     {
       "name": "LLM",
-      "value": 11
-    },
-    {
-      "name": "level",
-      "value": 11
-    },
-    {
-      "name": "methods",
-      "value": 11
-    },
-    {
-      "name": "neural",
       "value": 10
     },
     {
-      "name": "challenges",
+      "name": "网络安全",
       "value": 10
     },
     {
-      "name": "through",
+      "name": "语义分析",
       "value": 10
     },
     {
-      "name": "both",
+      "name": "开源数据集",
       "value": 10
     },
     {
-      "name": "more",
+      "name": "机器人技术",
       "value": 10
     },
     {
-      "name": "generation",
-      "value": 10
-    },
-    {
-      "name": "accuracy",
-      "value": 10
-    },
-    {
-      "name": "demonstrate",
-      "value": 10
-    },
-    {
-      "name": "Internet",
-      "value": 10
-    },
-    {
-      "name": "new",
-      "value": 10
-    },
-    {
-      "name": "task",
-      "value": 10
-    },
-    {
-      "name": "industrial",
+      "name": "注意力机制",
       "value": 10
     },
     {
@@ -285,10 +121,10 @@
       {
         "name": "具身智能",
         "data": [
-          2,
-          7,
-          21,
-          36,
+          1,
+          6,
+          6,
+          8,
           52
         ]
       },
@@ -305,10 +141,10 @@
       {
         "name": "大语言模型",
         "data": [
-          11,
-          47,
-          10,
-          4,
+          2,
+          17,
+          6,
+          2,
           50
         ]
       },
@@ -325,10 +161,10 @@
       {
         "name": "类脑计算",
         "data": [
-          2,
-          1,
-          18,
-          34,
+          11,
+          5,
+          24,
+          35,
           9
         ]
       },
@@ -336,18 +172,18 @@
         "name": "生成式AI",
         "data": [
           3,
-          13,
-          7,
-          1,
+          18,
+          10,
+          30,
           50
         ]
       },
       {
         "name": "智能控制",
         "data": [
-          2,
           5,
-          6,
+          12,
+          7,
           22,
           35
         ]
