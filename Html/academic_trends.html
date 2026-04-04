@@ -34,7 +34,7 @@
   a { text-decoration: none; color: inherit; }
   .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
 
-  /* 导航栏样式补充 (适配 navbar.js) */
+  /* 导航栏样式补充 */
   header { background-color: var(--card-bg); border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow); }
   .nav { display: flex; justify-content: space-between; align-items: center; height: 60px; }
   .brand { font-size: 1.2rem; font-weight: bold; color: var(--primary-color); }
@@ -42,68 +42,32 @@
   .menu a:hover, .menu a.active { color: var(--primary-color); }
   .theme-btn { background: none; border: none; color: var(--text-main); cursor: pointer; padding: 5px; }
 
-  /* 下拉菜单样式补偿 */
   .dropdown { position: relative; display: inline-block; }
   .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
   .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
   .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
   .dropdown:hover .dropdown-content { display: block; }
 
-  /* ================= 页面布局 ================= */
+  /* 页面布局 */
   .page-header { text-align: center; padding: 40px 0 20px; }
   .page-header h1 { font-size: 2.2rem; margin-bottom: 10px; background: linear-gradient(90deg, #0084ff, #00c6ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
   .page-header p { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 15px; }
 
   .meta-tags { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-top: 20px; }
   .meta-tag { background: var(--card-bg); border: 1px solid var(--border-color); padding: 8px 15px; border-radius: 20px; font-size: 0.85rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow); transition: transform 0.3s ease; }
-  .meta-tag:hover { transform: translateY(-2px); border-color: var(--primary-color); }
-  .meta-tag svg { width: 16px; height: 16px; color: var(--primary-color); }
 
-  /* KPI 数据卡片 */
-  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 10px; margin-bottom: 25px; }
-  .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; text-align: center; box-shadow: var(--shadow); }
-  .kpi-value { font-size: 1.8rem; font-weight: bold; color: var(--primary-color); margin: 5px 0; }
-  .kpi-label { font-size: 0.9rem; color: var(--text-muted); }
-
-  .dashboard-grid { 
-      display: grid; 
-      grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); 
-      gap: 25px; 
-      margin-bottom: 40px; 
-  }
-  @media (max-width: 900px) { .kpi-grid { grid-template-columns: 1fr; } }
-
-  .chart-card { 
-      background-color: var(--card-bg); 
-      border: 1px solid var(--border-color); 
-      border-radius: 12px; 
-      padding: 20px; 
-      box-shadow: var(--shadow); 
-      transition: transform 0.3s ease;
-      display: flex; 
-      flex-direction: column; 
-  }
+  /* 网格布局 */
+  .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 25px; margin-bottom: 40px; }
+  
+  .chart-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); transition: transform 0.3s ease; display: flex; flex-direction: column; }
   .chart-card:hover { transform: translateY(-3px); }
   
   .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
   .card-header h3 { font-size: 1.2rem; display: flex; align-items: center; gap: 8px; margin: 0; }
-  .card-header h3::before { content: ''; display: block; width: 4px; height: 18px; background: var(--primary-color); border-radius: 2px; }
   
-  .chart-container { width: 100%; height: 380px; flex-grow: 1; }
-  
-  .card-footer { 
-      margin-top: 15px; 
-      font-size: 0.85rem; 
-      color: var(--text-muted); 
-      text-align: left; 
-      background: rgba(0,0,0,0.02); 
-      padding: 12px 15px; 
-      border-radius: 6px;
-      line-height: 1.5; 
-      height: auto; 
-      word-wrap: break-word; 
-  }
+  .chart-container { width: 100%; height: 350px; flex-grow: 1; }
 
+  .section-title { margin: 40px 0 20px; font-size: 1.5rem; color: var(--text-main); font-weight: bold; border-left: 5px solid var(--primary-color); padding-left: 15px; background: var(--card-bg); border-radius: 8px; padding-top: 10px; padding-bottom: 10px; border: 1px solid var(--border-color); box-shadow: var(--shadow);}
   .status-bar { text-align: center; padding: 10px; background-color: rgba(0, 132, 255, 0.1); color: var(--primary-color); border-radius: 6px; margin-bottom: 20px; display: none; }
 </style>
 </head>
@@ -115,56 +79,62 @@
 <main class="container">
   <section class="page-header">
     <h1>学术热点识别与前沿方向发现</h1>
-    <p>基于 NLP 自然语言处理与 TF-IDF 算法，动态追踪自动化领域演化趋势。</p>
+    <p>追踪前沿演化，探索从「理论」到「工程」的语义迁移模型。</p>
     
     <div class="meta-tags">
-      <div class="meta-tag">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-        更新频率：每日自动拉取增量数据
-      </div>
-      <div class="meta-tag">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-        数据来源：知乎、小红书等平台社交数据
-      </div>
-      <div class="meta-tag">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-        计算引擎：GitHub Actions & 本地 NLP
-      </div>
+      <div class="meta-tag">更新频率：每日自动拉取增量数据</div>
+      <div class="meta-tag">数据支撑：Semantic Scholar / arXiv / GitHub</div>
+      <div class="meta-tag">计算引擎：GitHub Actions & 本地 NLP 分流计算</div>
     </div>
   </section>
 
   <div id="update-status" class="status-bar">正在从服务器拉取最新 NLP 提取数据...</div>
 
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-label">有效数据时间跨度</div>
-      <div class="kpi-value" id="kpi-timespan" style="font-size: 1.4rem; line-height: 2.3rem; color: var(--text-main);">-</div>
+  <h2 class="section-title" style="border-left-color: #0084ff;">🌟 总体趋势：全网大盘热度汇总</h2>
+  <div class="dashboard-grid">
+    <div class="chart-card">
+      <div class="card-header"><h3>全网核心语义图谱 (TF-IDF)</h3></div>
+      <div id="wordcloud-total" class="chart-container"></div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-label">成功提取有效实体词汇</div>
-      <div class="kpi-value" id="kpi-wordcount">-</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-label">当前绝对热度榜首</div>
-      <div class="kpi-value" id="kpi-topword" style="color: #ff2442;">-</div>
+    <div class="chart-card">
+      <div class="card-header"><h3>全网词汇热点随时间演化图</h3></div>
+      <div id="trend-total" class="chart-container"></div>
     </div>
   </div>
 
+  <h2 class="section-title" style="border-left-color: #2980b9;">📚 权威文献视角 (Semantic Scholar)</h2>
   <div class="dashboard-grid">
     <div class="chart-card">
-      <div class="card-header"><h3>前沿核心语义图谱 (TF-IDF)</h3></div>
-      <div id="wordcloud-chart" class="chart-container"></div>
-      <div class="card-footer">
-        <strong>* 算法说明：</strong> 基于结巴分词提取名词/动名词实体，通过 TF-IDF 算法过滤停用词并计算权重。字体越大代表该词在全局文本中“信息熵”与重要性越高。
-      </div>
+      <div class="card-header"><h3 style="color:#2980b9;">文献词云图谱</h3></div>
+      <div id="wordcloud-ss" class="chart-container"></div>
     </div>
-
     <div class="chart-card">
-      <div class="card-header"><h3>核心实体热度演化趋势</h3></div>
-      <div id="trend-chart" class="chart-container"></div>
-      <div class="card-footer">
-        <strong>* 交互提示：</strong> 支持使用图表下方的滑动条（DataZoom）自由缩放、平移特定时间段的数据；右上角提供数据导出与高清图片下载功能。
-      </div>
+      <div class="card-header"><h3 style="color:#2980b9;">文献核心词汇演化趋势</h3></div>
+      <div id="trend-ss" class="chart-container"></div>
+    </div>
+  </div>
+
+  <h2 class="section-title" style="border-left-color: #c0392b;">🔬 前沿理论视角 (arXiv 预印本)</h2>
+  <div class="dashboard-grid">
+    <div class="chart-card">
+      <div class="card-header"><h3 style="color:#c0392b;">预印本词云图谱</h3></div>
+      <div id="wordcloud-ar" class="chart-container"></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header"><h3 style="color:#c0392b;">预印本核心词汇演化趋势</h3></div>
+      <div id="trend-ar" class="chart-container"></div>
+    </div>
+  </div>
+
+  <h2 class="section-title" style="border-left-color: #27ae60;">💻 工程落地视角 (GitHub 开源库)</h2>
+  <div class="dashboard-grid">
+    <div class="chart-card">
+      <div class="card-header"><h3 style="color:#27ae60;">开源库词云图谱</h3></div>
+      <div id="wordcloud-gh" class="chart-container"></div>
+    </div>
+    <div class="chart-card">
+      <div class="card-header"><h3 style="color:#27ae60;">开源库核心词汇演化趋势</h3></div>
+      <div id="trend-gh" class="chart-container"></div>
     </div>
   </div>
 </main>
@@ -172,189 +142,127 @@
 <script src="../JS/navbar.js"></script>
 
 <script>
-let wordCloudChart, trendChart;
+let charts = {};
 let globalData = null;
 
 document.addEventListener('DOMContentLoaded', () => {
-    wordCloudChart = echarts.init(document.getElementById('wordcloud-chart'));
-    trendChart = echarts.init(document.getElementById('trend-chart'));
+    const chartIds = [
+        'wordcloud-total', 'trend-total',
+        'wordcloud-ss', 'trend-ss',
+        'wordcloud-ar', 'trend-ar',
+        'wordcloud-gh', 'trend-gh'
+    ];
     
-    wordCloudChart.showLoading();
-    trendChart.showLoading();
-    document.getElementById('update-status').style.display = 'block';
+    // 批量初始化并显示 Loading
+    chartIds.forEach(id => {
+        charts[id] = echarts.init(document.getElementById(id));
+        charts[id].showLoading();
+    });
 
+    document.getElementById('update-status').style.display = 'block';
     observeThemeChange();
 
     const jsonUrl = '../data/academic_summary.json?t=' + new Date().getTime(); 
     
     fetch(jsonUrl)
-        .then(response => {
-            if (!response.ok) throw new Error('网络响应失败');
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            // 直接采用原始数据，移除前端的 JS 单词过滤，原汁原味展示 JSON 中的数据
             globalData = data;
-            document.getElementById('update-status').innerText = '✅ NLP 模型分析完成！数据已同步。';
+            document.getElementById('update-status').innerText = '✅ NLP 模型分析完成！分平台图谱已渲染。';
             setTimeout(() => { document.getElementById('update-status').style.display = 'none'; }, 3000);
             
-            wordCloudChart.hideLoading();
-            trendChart.hideLoading();
-            
-            updateKPI(data);
-            renderWordCloud(data.wordCloud);
-            renderTrendChart(data.trendData);
+            Object.values(charts).forEach(c => c.hideLoading());
+            renderAllCharts();
         })
         .catch(error => {
-            console.error('获取数据失败:', error);
+            console.error('加载失败:', error);
             document.getElementById('update-status').innerText = '拉取数据失败，请确保后端的 NLP 生成脚本已成功运行。';
             document.getElementById('update-status').style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
             document.getElementById('update-status').style.color = 'red';
-            wordCloudChart.hideLoading();
-            trendChart.hideLoading();
+            Object.values(charts).forEach(c => c.hideLoading());
         });
 
     window.addEventListener('resize', () => {
-        wordCloudChart.resize();
-        trendChart.resize();
+        Object.values(charts).forEach(c => c.resize());
     });
 });
-
-function updateKPI(data) {
-    if (data.trendData && data.trendData.years && data.trendData.years.length > 0) {
-        const years = data.trendData.years;
-        const span = years.length === 1 ? years[0] : `${years[0]} 至 ${years[years.length - 1]}`;
-        document.getElementById('kpi-timespan').innerText = span;
-    }
-    
-    if (data.wordCloud && data.wordCloud.length > 0) {
-        document.getElementById('kpi-wordcount').innerText = data.wordCloud.length + " 个";
-        document.getElementById('kpi-topword').innerText = data.wordCloud[0].name;
-    }
-}
 
 function observeThemeChange() {
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
-            if (mutation.attributeName === 'data-theme') {
-                if (globalData) {
-                    renderWordCloud(globalData.wordCloud);
-                    renderTrendChart(globalData.trendData);
-                }
+            if (mutation.attributeName === 'data-theme' && globalData) {
+                renderAllCharts();
             }
         });
     });
-    
-    observer.observe(document.documentElement, {
-        attributes: true,
-        attributeFilter: ['data-theme']
-    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 }
 
 function getThemeColors() {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    return {
-        text: isDark ? '#c9d1d9' : '#2c3e50',
-        splitLine: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(150,150,150,0.2)'
-    };
+    return { text: isDark ? '#c9d1d9' : '#2c3e50', splitLine: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(150,150,150,0.2)' };
 }
 
-function renderWordCloud(wordData) {
-    const fixedPalette = [
-        '#0084ff', '#00c6ff', '#1abc9c', '#8e44ad', '#2980b9',
-        '#e67e22', '#d35400', '#c0392b', '#16a085', '#27ae60'
-    ];
+function renderAllCharts() {
+    if (!globalData) return;
+    const { wordClouds, trendData } = globalData;
+    const years = trendData.years;
 
-    const staticWordData = wordData.map((item, index) => {
-        return {
-            name: item.name,
-            value: item.value,
-            textStyle: {
-                color: fixedPalette[index % fixedPalette.length]
-            }
-        };
-    });
+    // 渲染词云
+    renderWordCloud(charts['wordcloud-total'], wordClouds.total, [14, 65]);
+    renderWordCloud(charts['wordcloud-ss'], wordClouds.semantic_scholar, [12, 45]);
+    renderWordCloud(charts['wordcloud-ar'], wordClouds.arxiv, [12, 45]);
+    renderWordCloud(charts['wordcloud-gh'], wordClouds.github, [12, 45]);
 
-    const option = {
-        tooltip: { show: true, formatter: '{b} <br/> 算法权重 (TF-IDF): {c}' },
+    // 渲染折线趋势图
+    renderTrendChart(charts['trend-total'], trendData.total, years);
+    renderTrendChart(charts['trend-ss'], trendData.semantic_scholar, years);
+    renderTrendChart(charts['trend-ar'], trendData.arxiv, years);
+    renderTrendChart(charts['trend-gh'], trendData.github, years);
+}
+
+function renderWordCloud(chartInstance, wordData, sizeRange) {
+    if (!wordData || wordData.length === 0) return;
+    
+    const fixedPalette = ['#0084ff', '#00c6ff', '#1abc9c', '#8e44ad', '#2980b9', '#e67e22', '#d35400', '#c0392b', '#16a085', '#27ae60'];
+    const staticWordData = wordData.map((item, index) => ({
+        name: item.name, value: item.value,
+        textStyle: { color: fixedPalette[index % fixedPalette.length] }
+    }));
+
+    chartInstance.setOption({
+        tooltip: { show: true, formatter: '{b} <br/> 算法权重: {c}' },
         series: [{
-            type: 'wordCloud',
-            shape: 'circle',
-            keepAspect: false,
+            type: 'wordCloud', shape: 'circle', keepAspect: false,
             left: 'center', top: 'center', right: 'center', bottom: 'center',
-            sizeRange: [14, 65],
-            rotationRange: [-45, 45], 
-            rotationStep: 45,
-            gridSize: 8,
-            textStyle: {
-                fontFamily: 'sans-serif',
-                fontWeight: 'bold'
-            },
-            emphasis: { focus: 'self', textStyle: { textShadowBlur: 10, textShadowColor: '#333' } },
+            sizeRange: sizeRange, rotationRange: [-45, 45], rotationStep: 45, gridSize: 8,
+            textStyle: { fontFamily: 'sans-serif', fontWeight: 'bold' },
             data: staticWordData
         }]
-    };
-    wordCloudChart.setOption(option);
+    });
 }
 
-function renderTrendChart(trendData) {
+function renderTrendChart(chartInstance, seriesData, years) {
+    if (!seriesData || seriesData.length === 0) return;
+    
     const theme = getThemeColors();
-    const colors = [
-        '#ff2442', '#0084ff', '#07C160', '#f1c40f', '#8e44ad', 
-        '#e67e22', '#1abc9c', '#34495e', '#d35400', '#2980b9'
-    ];
+    // 固定颜色盘，保证各平台的“具身智能”始终是一种颜色，方便对比
+    const colors = ['#ff2442', '#0084ff', '#07C160', '#f1c40f', '#8e44ad', '#e67e22', '#1abc9c', '#34495e'];
 
-    const option = {
+    chartInstance.setOption({
         tooltip: { trigger: 'axis', axisPointer: { type: 'cross', label: { backgroundColor: '#6a7985' } } },
-        legend: { 
-            data: trendData.series.map(s => s.name), 
-            textStyle: { color: theme.text }, 
-            top: 0,
-            width: '80%', // 限制图例宽度以强制自然换行
-            itemGap: 15
-        },
-        toolbox: {
-            feature: {
-                dataView: { show: true, readOnly: false, title: '数据视图' },
-                saveAsImage: { show: true, title: '保存为图片' }
-            },
-            iconStyle: { borderColor: theme.text }
-        },
-        // 核心修改：使用固定的像素高度 (top: 85) 来确保上方留有足够的空间容纳多行图例
-        grid: { left: '3%', right: '4%', bottom: '15%', top: 85, containLabel: true },
-        dataZoom: [
-            { type: 'inside', start: 0, end: 100 },
-            { start: 0, end: 100, textStyle: { color: theme.text } }
-        ],
-        xAxis: {
-            type: 'category',
-            boundaryGap: false,
-            data: trendData.years,
-            axisLabel: { color: theme.text }
-        },
-        yAxis: {
-            type: 'value',
-            name: '绝对热度 (次)',
-            nameTextStyle: { color: theme.text },
-            axisLabel: { color: theme.text },
-            splitLine: { lineStyle: { type: 'dashed', color: theme.splitLine } }
-        },
-        series: trendData.series.map((item, index) => ({
-            name: item.name,
-            type: 'line',
-            smooth: true,
-            symbolSize: 8,
+        legend: { data: seriesData.map(s => s.name), textStyle: { color: theme.text }, top: 0, width: '90%', itemGap: 10, itemWidth: 14 },
+        grid: { left: '3%', right: '4%', bottom: '15%', top: 65, containLabel: true },
+        dataZoom: [ { type: 'inside', start: 0, end: 100 }, { start: 0, end: 100, textStyle: { color: theme.text } } ],
+        xAxis: { type: 'category', boundaryGap: false, data: years, axisLabel: { color: theme.text } },
+        yAxis: { type: 'value', name: '热度(次)', nameTextStyle: { color: theme.text }, axisLabel: { color: theme.text }, splitLine: { lineStyle: { type: 'dashed', color: theme.splitLine } } },
+        series: seriesData.map((item, index) => ({
+            name: item.name, type: 'line', smooth: true, symbolSize: 6,
             itemStyle: { color: colors[index % colors.length] },
-            areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                    { offset: 0, color: colors[index % colors.length].replace('rgb','rgba').replace(')', ', 0.2)') },
-                    { offset: 1, color: 'rgba(255,255,255,0)' }
-                ])
-            },
+            areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: colors[index % colors.length].replace('rgb','rgba').replace(')', ', 0.2)') }, { offset: 1, color: 'rgba(255,255,255,0)' }]) },
             data: item.data
         }))
-    };
-    trendChart.setOption(option);
+    });
 }
 </script>
 
