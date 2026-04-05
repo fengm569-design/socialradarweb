@@ -1,0 +1,73 @@
+name: Academic Data & Analysis Pipeline
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 每天凌晨自动运行一次
+  workflow_dispatch:      # 支持手动一键运行
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-analyze:
+    runs-on: ubuntu-latest
+    env:
+      # 1. 抓取配置 (已更新为最新名单)
+      KEYWORDS: "自动化学会,王飞跃,杨孟飞,郑南宁,高会军,张承慧,戴琼海,何友"
+      MAX_RESULTS_PER_KEYWORD: "30"
+      # 2. 这里的 Secret 需要你在 GitHub Settings 里配置好
+      MY_GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+      SS_API_KEY: ${{ secrets.SS_API_KEY }}
+
+    steps:
+      - name: 1. 拉取仓库代码
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 2. 配置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 3. 安装所有依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install playwright pandas jieba requests urllib3
+          python -m playwright install --with-deps chromium
+
+      - name: 4. 恢复知乎登录状态 (从 Secret 读取)
+        env:
+          STORAGE_JSON: ${{ secrets.storage }}
+        run: |
+          python - << 'PY'
+          import os
+          s = os.environ.get("STORAGE_JSON", "")
+          if s.strip():
+              with open("storage_state.json", "w", encoding="utf-8") as f:
+                  f.write(s)
+              print("Login state restored")
+          PY
+          cp storage_state.json scripts/storage_state.json || true
+
+      - name: 5. 运行知乎爬虫 (数据采集)
+        run: python -u scripts/zhihu.py
+
+      - name: 6. 运行学术报告分析 (数据加工)
+        run: python scripts/generate_academic_report.py
+
+      - name: 7. 提交并推送所有更新 (CSV/JSON/热词图)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 添加所有变动的文件
+          git add data/
+          
+          # 检查是否有内容更新，有则提交
+          if git diff --cached --quiet; then
+            echo "没有发现数据变动，跳过提交"
+          else
+            git commit -m "🤖 自动更新：全平台采集与学术分析完成"
+            git push
+          fi
