@@ -7,7 +7,7 @@ import time
 from cozepy import Coze, TokenAuth, Stream, WorkflowEvent, WorkflowEventType, COZE_CN_BASE_URL
 
 # ================= 配置区 =================
-COZE_API_TOKEN = 'cztei_hLO8RsmuBFu94A3ksz3gYDQIRxak4qtqUSktwb9e0Bsimb4nz9brynEZpbKRUeIB4'
+COZE_API_TOKEN = 'cztei_huOzAFPbqHv2tPhCpVlFE3ooBtS0jUvzt2DzMfmwBcNUkbWxyxAeEDLjb3dMlTMdW'
 WORKFLOW_ID = '7603685878149660718'
 
 INPUT_KEYWORDS = [
