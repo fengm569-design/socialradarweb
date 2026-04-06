@@ -6,7 +6,195 @@
   <title>社会雷达 Social Radar - 全域舆情感知系统</title>
   <link rel="stylesheet" href="CSS/main.css">
 </head>
+<style>
+  /* 智能体悬浮按钮 */
+  #agent-fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, #0084ff, #00c6ff); border-radius: 50%; box-shadow: 0 4px 15px rgba(0,132,255,0.4); cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: transform 0.3s; }
+  #agent-fab:hover { transform: scale(1.1); }
+  #agent-fab svg { fill: white; width: 32px; height: 32px; }
 
+  /* 智能体对话窗口 */
+  #agent-window { position: fixed; bottom: 100px; right: 30px; width: 350px; height: 500px; background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e4e7ed); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 9998; overflow: hidden; }
+  
+  /* 头部 */
+  #agent-header { background: linear-gradient(135deg, #0084ff, #00c6ff); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+  #agent-header-controls { display: flex; gap: 10px; cursor: pointer; }
+  
+  /* 消息区 */
+  #agent-messages { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: var(--bg-color, #f5f7fa); }
+  .msg { max-width: 80%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; word-wrap: break-word;}
+  .msg.bot { background: var(--card-bg, #fff); color: var(--text-main, #333); border: 1px solid var(--border-color, #eee); align-self: flex-start; border-bottom-left-radius: 0; }
+  .msg.user { background: #0084ff; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+  
+  /* 输入区 */
+  #agent-input-area { display: flex; border-top: 1px solid var(--border-color, #eee); padding: 10px; background: var(--card-bg, #fff); }
+  #agent-input { flex-grow: 1; border: 1px solid var(--border-color, #ccc); border-radius: 20px; padding: 8px 15px; outline: none; font-size: 0.9rem; background: var(--bg-color, #fff); color: var(--text-main, #333); }
+  #agent-send { background: none; border: none; color: #0084ff; padding: 0 10px; cursor: pointer; font-weight: bold; }
+
+  /* 密钥配置遮罩层 */
+  #agent-config { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: none; flex-direction: column; padding: 20px; z-index: 10; box-sizing: border-box; }
+  .config-input { width: 100%; padding: 8px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; }
+</style>
+
+<div id="agent-fab" onclick="toggleAgent()">
+  <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+</div>
+
+<div id="agent-window">
+  <div id="agent-header">
+    <span>🧠 雷达 Agent 智能体</span>
+    <div id="agent-header-controls">
+      <span onclick="toggleConfig()" title="配置密钥">⚙️</span>
+      <span onclick="toggleAgent()" title="关闭">✖</span>
+    </div>
+  </div>
+  
+  <div id="agent-messages">
+    <div class="msg bot">你好！我是社会雷达的智能控制中枢。请告诉我你想追踪哪些学术热点？（例如：“帮我抓取大语言模型和强化学习的最新数据”）</div>
+  </div>
+
+  <div id="agent-input-area">
+    <input type="text" id="agent-input" placeholder="输入指令唤醒智能体..." onkeypress="handleEnter(event)">
+    <button id="agent-send" onclick="sendAgentMessage()">发送</button>
+  </div>
+
+  <div id="agent-config">
+    <h3 style="margin-top:0; color:#333;">⚙️ 节点连接配置</h3>
+    <p style="font-size:12px; color:#666;">为保障安全，API 密钥仅保存在您的浏览器本地，不会上传至代码仓库。</p>
+    <label style="font-size:13px; color:#333;">GitHub 账户名 (例如: fengm569):</label>
+    <input type="text" id="cfg-github-user" class="config-input" placeholder="输入 GitHub Username">
+    
+    <label style="font-size:13px; color:#333;">GitHub 仓库名 (例如: socialradarweb):</label>
+    <input type="text" id="cfg-github-repo" class="config-input" placeholder="输入 Repository Name">
+
+    <label style="font-size:13px; color:#333;">GitHub PAT (用于触发后台):</label>
+    <input type="password" id="cfg-github-pat" class="config-input" placeholder="ghp_...">
+    
+    <button onclick="saveConfig()" style="margin-top:10px; padding:10px; background:#0084ff; color:#fff; border:none; border-radius:5px; cursor:pointer;">保存并连接</button>
+    <button onclick="toggleConfig()" style="margin-top:10px; padding:10px; background:#ccc; color:#333; border:none; border-radius:5px; cursor:pointer;">取消</button>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// 🧠 智能体核心驱动逻辑 (DeepSeek + GitHub)
+// ==========================================
+
+// 你提供的 DeepSeek API Key (前端直接调用)
+const DEEPSEEK_API_KEY = "sk-1cbefcbdecdc46d58bead7da8ef317fa";
+
+function toggleAgent() {
+  const win = document.getElementById('agent-window');
+  win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+}
+
+function toggleConfig() {
+  const cfg = document.getElementById('agent-config');
+  if(cfg.style.display !== 'flex') {
+      document.getElementById('cfg-github-user').value = localStorage.getItem('github_user') || '';
+      document.getElementById('cfg-github-repo').value = localStorage.getItem('github_repo') || '';
+      document.getElementById('cfg-github-pat').value = localStorage.getItem('github_pat') || '';
+      cfg.style.display = 'flex';
+  } else {
+      cfg.style.display = 'none';
+  }
+}
+
+function saveConfig() {
+  localStorage.setItem('github_user', document.getElementById('cfg-github-user').value.trim());
+  localStorage.setItem('github_repo', document.getElementById('cfg-github-repo').value.trim());
+  localStorage.setItem('github_pat', document.getElementById('cfg-github-pat').value.trim());
+  toggleConfig();
+  appendMsg('bot', '✅ 节点配置已保存，云端链路已打通！');
+}
+
+function appendMsg(sender, text) {
+  const container = document.getElementById('agent-messages');
+  const msgDiv = document.createElement('div');
+  msgDiv.className = `msg ${sender}`;
+  msgDiv.innerText = text;
+  container.appendChild(msgDiv);
+  container.scrollTop = container.scrollHeight;
+}
+
+function handleEnter(e) {
+  if (e.key === 'Enter') sendAgentMessage();
+}
+
+async function sendAgentMessage() {
+  const inputEl = document.getElementById('agent-input');
+  const userText = inputEl.value.trim();
+  if (!userText) return;
+
+  // 1. 检查配置是否完善
+  const ghUser = localStorage.getItem('github_user');
+  const ghRepo = localStorage.getItem('github_repo');
+  const ghPat = localStorage.getItem('github_pat');
+  
+  if(!ghUser || !ghRepo || !ghPat) {
+      appendMsg('bot', '⚠️ 缺失关键配置。请先点击右上角 ⚙️ 配置 GitHub 参数。');
+      toggleConfig();
+      return;
+  }
+
+  // 2. 显示用户消息
+  appendMsg('user', userText);
+  inputEl.value = '';
+  appendMsg('bot', '🧠 正在进行意图识别...');
+
+  try {
+      // 3. 调用 DeepSeek 进行意图识别与关键词提取
+      const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${DEEPSEEK_API_KEY}`
+          },
+          body: JSON.stringify({
+              model: "deepseek-chat",
+              messages: [
+                  {
+                      role: "system", 
+                      content: "你是一个数据指令提取机器人。用户会输入一段话，你需要从中提取出用户想要搜索的学术名词、机构名或人名。请只返回一个逗号分隔的词汇列表（例如：大语言模型,自动化学会,钱锋）。不要回答任何其他多余的文字，不要用markdown格式。"
+                  },
+                  { role: "user", content: userText }
+              ]
+          })
+      });
+
+      if(!dsRes.ok) throw new Error("DeepSeek 大脑响应失败");
+      
+      const dsData = await dsRes.json();
+      const extractedKeywords = dsData.choices[0].message.content.trim();
+      
+      appendMsg('bot', `🎯 意图识别成功！准备启动云端服务器。\n追踪目标: [ ${extractedKeywords} ]`);
+
+      // 4. 调用 GitHub API 触发 Actions
+      const ghApiUrl = `https://api.github.com/repos/${ghUser}/${ghRepo}/actions/workflows/academic_pipeline.yml/dispatches`;
+      const ghRes = await fetch(ghApiUrl, {
+          method: "POST",
+          headers: {
+              "Accept": "application/vnd.github+json",
+              "Authorization": `Bearer ${ghPat}`,
+              "X-GitHub-Api-Version": "2022-11-28"
+          },
+          body: JSON.stringify({
+              ref: "main",
+              inputs: { agent_keywords: extractedKeywords }
+          })
+      });
+
+      if(!ghRes.ok) {
+          const errText = await ghRes.text();
+          throw new Error(`后台拒接了指令: ${ghRes.status} ${errText}`);
+      }
+
+      appendMsg('bot', '🚀 指令已成功下发至云端服务器！爬虫与 NLP 分析引擎正在为您全速运转。大概需要 3~5 分钟，请稍后刷新图表页面查看最新结果。');
+
+  } catch (error) {
+      appendMsg('bot', `❌ 执行出错: ${error.message}`);
+  }
+}
+</script>
 <body>
 
   <header id="common-header"></header>
