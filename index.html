@@ -143,7 +143,7 @@ async function sendAgentMessage() {
 
   try {
       // 3. 调用 DeepSeek 进行意图识别与关键词提取
-      const dsRes = await fetch("https://api.deepseek.com/chat/completions", {
+      const dsRes = await fetch("https://api.deepseek.com/v1/chat/completions", {
           method: "POST",
           headers: {
               "Content-Type": "application/json",
