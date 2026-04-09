@@ -59,9 +59,18 @@
   }
   .article-summary { font-size: 0.85rem; color: var(--text-muted); margin-top: 6px; line-height: 1.5; }
   .person-avatar { background: var(--primary-color) !important; color: #fff; }
+
+  /* 补充下拉菜单和加载动画的兼容样式 */
+  .dropdown { position: relative; display: inline-block; }
+  .dropdown-content { display: none; position: absolute; background-color: var(--card-bg); min-width: 120px; box-shadow: var(--shadow); z-index: 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-color); }
+  .dropdown-content a { color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; font-size: 0.9rem; }
+  .dropdown-content a:hover { background-color: var(--bg-color); color: var(--primary-color); }
+  .dropdown:hover .dropdown-content { display: block; }
 </style>
 </head>
 <body>
+
+<header id="common-header"></header>
 
 <div id="loading" style="text-align: center; padding: 50px;">正在从 ../data 目录读取微信数据...</div>
 
@@ -96,6 +105,8 @@
   <div id="content-area"></div>
 
 </div>
+
+<script src="../JS/navbar.js"></script>
 
 <script>
 // 日期基准：如果今天没有数据，用来回溯过去7天的图表展示
@@ -143,11 +154,10 @@ function parseCSV(text){
             summary: arr[4],       
             url: arr[5] || '#'     // 提取第6列的超链接
         };
-    }).filter(item => item !== null && item.keyword);
+    }).filter(item => item !== null && item.keyword && item.keyword !== '王飞跃' && item.account !== '王飞跃'); // 根据设定过滤指定数据
 }
 
 /* ================= ECharts 绘图函数 ================= */
-// (此处保留图表绘制逻辑，为了节约篇幅，图表构建逻辑与之前一致)
 function buildStats(data) {
     const monthMap = {}; const weekMap = {}; const weekDays = [];
     const start = new Date(CURRENT_DATE); start.setDate(start.getDate() - 6);
@@ -212,7 +222,6 @@ function renderPersons(grouped){
             const displayTitle = p.title.length > 50 ? p.title.substring(0, 50) + '...' : p.title;
             const displaySummary = p.summary && p.summary !== 'N/A' ? (p.summary.length > 70 ? p.summary.substring(0, 70) + '...' : p.summary) : '暂无摘要内容';
             
-            // 核心修改：使用提取到的 p.url，并添加 hover 样式类 .article-link
             postsHtml += `
                 <li style="margin-bottom: 16px; border-bottom: 1px dashed var(--border-color); padding-bottom: 12px;">
                     <a href="${p.url}" target="_blank" title="点击阅读原文：${p.title}" class="article-link">
@@ -277,7 +286,6 @@ function renderPersons(grouped){
 }
 
 /* ================= 主程序入口 ================= */
-// 修改为从上级 data 目录获取 CSV
 fetch('../data/wechat_research_data.csv')
     .then(r => { 
         if(!r.ok) throw new Error(r.status); 
@@ -287,6 +295,14 @@ fetch('../data/wechat_research_data.csv')
         document.getElementById('loading').style.display = 'none';
 
         const all = parseCSV(res);
+
+        // 新增：全局按照时间降序排序（最新的文章排在最前面）
+        all.sort((a, b) => {
+            const dateA = new Date(a.created_at || 0).getTime();
+            const dateB = new Date(b.created_at || 0).getTime();
+            return dateB - dateA;
+        });
+
         GLOBAL_ALL_DATA = all;
 
         document.getElementById('total-posts').innerText = all.length;
