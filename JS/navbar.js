@@ -1,23 +1,26 @@
 // JS/navbar.js
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. 智能判断路径：因为主页在根目录，而其他页面在 Html/ 文件夹下
-    // 所以需要自动判断相对路径的前缀
-    const isSubFolder = window.location.pathname.includes('/Html/') || window.location.href.includes('/Html/');
+    // 1. 智能判断路径：统一转换为小写进行判断，避免因本地环境/浏览器不同导致的大小写匹配失败
+    const currentPath = window.location.pathname.toLowerCase();
+    const currentHref = window.location.href.toLowerCase();
+    const isSubFolder = currentPath.includes('/html/') || currentHref.includes('/html/');
+    
     const rootPath = isSubFolder ? '../' : './';
     const htmlPath = isSubFolder ? './' : 'Html/';
 
-    // 2. 统一的导航栏 HTML 模板（在这里修改，所有页面都会生效）
+    // 2. 统一的导航栏 HTML 模板
+    // 修复：为下拉菜单里的 <a> 标签补充了 class="nav-link"，这样它们才能被下方的高亮逻辑捕捉到
     const navHtml = `
       <div class="container nav">
         <div class="brand">社会雷达 · Social Radar</div>
         <nav class="menu">
           <a href="${rootPath}index.html" class="nav-link">首页</a>
           <div class="dropdown">
-            <a href="javascript:void(0)" class="dropbtn nav-link">数据分析</a>
+            <a href="javascript:void(0)" class="dropbtn">数据分析 ▾</a>
             <div class="dropdown-content">
-              <a href="${htmlPath}zhihu_data.html">知乎</a>
-              <a href="${htmlPath}weibo_data.html">微信公众号</a>
-              <a href="${htmlPath}xiaohongshu.html">小红书</a>
+              <a href="${htmlPath}zhihu_data.html" class="nav-link">知乎</a>
+              <a href="${htmlPath}weibo_data.html" class="nav-link">微信公众号</a>
+              <a href="${htmlPath}xiaohongshu.html" class="nav-link">小红书</a>
             </div>
           </div>
           <a href="${htmlPath}analysis.html" class="nav-link">CSV分析</a>
@@ -37,16 +40,30 @@ document.addEventListener('DOMContentLoaded', () => {
         headerEl.innerHTML = navHtml;
         
         // 4. 自动高亮当前所在的页面 (active 状态)
-        const currentFilename = window.location.pathname.split('/').pop() || 'index.html';
+        let currentFilename = window.location.pathname.split('/').pop();
+        // 修复：如果是在根目录(如 / 或者 /socialradarweb-main/)，默认视为 index.html
+        if (!currentFilename || currentFilename === '') {
+            currentFilename = 'index.html';
+        }
+        
         const links = headerEl.querySelectorAll('.nav-link');
         links.forEach(link => {
-            if (link.getAttribute('href').includes(currentFilename)) {
+            const href = link.getAttribute('href');
+            if (href && href.includes(currentFilename)) {
                 link.classList.add('active');
+                
+                // 附加功能：如果当前激活的是下拉菜单里的页面（比如 weibo_data.html），让主菜单的“数据分析”也保持高亮
+                const parentDropdown = link.closest('.dropdown');
+                if(parentDropdown) {
+                    parentDropdown.querySelector('.dropbtn').classList.add('active');
+                }
             }
         });
 
         // 5. 初始化深色/浅色主题切换逻辑
         initThemeToggle();
+    } else {
+        console.warn('导航栏加载失败：当前页面缺少 <header id="common-header"></header> 容器。');
     }
 });
 
