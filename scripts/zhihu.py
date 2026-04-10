@@ -36,8 +36,13 @@ KEYWORDS = (
 )
 
 MAX_RESULTS = int(os.getenv("MAX_RESULTS_PER_KEYWORD", "30"))
-DATA_DIR = os.getenv("DATA_DIR", "data")
-DEBUG_DIR = os.getenv("DEBUG_DIR", "debug")
+
+# 获取当前脚本所在目录的上一级目录 (绝对路径)
+PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# 将默认存储路径修改为父级目录下的 data 文件夹
+DATA_DIR = os.getenv("DATA_DIR", os.path.join(PARENT_DIR, "data"))
+DEBUG_DIR = os.getenv("DEBUG_DIR", os.path.join(PARENT_DIR, "debug"))
 
 STORAGE_STATE_PATH = os.getenv("STORAGE_STATE_PATH", "storage_state.json")
 
