@@ -5,6 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>社会雷达 Social Radar - 全域舆情感知系统</title>
   <link rel="stylesheet" href="CSS/main.css">
+  <style>
+    /* 智能体悬浮按钮 */
+    #agent-fab { position: fixed; bottom: 30px; right: 30px; width: 60px; height: 60px; background: linear-gradient(135deg, #0084ff, #00c6ff); border-radius: 50%; box-shadow: 0 4px 15px rgba(0,132,255,0.4); cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 9999; transition: transform 0.3s; }
+    #agent-fab:hover { transform: scale(1.1); }
+    #agent-fab svg { fill: white; width: 32px; height: 32px; }
+
+    /* 智能体对话窗口 */
+    #agent-window { position: fixed; bottom: 100px; right: 30px; width: 380px; height: 550px; background: #fff; border: 1px solid #e4e7ed; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: none; flex-direction: column; z-index: 9998; overflow: hidden; }
+    
+    /* 头部 */
+    #agent-header { background: linear-gradient(135deg, #0084ff, #00c6ff); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+    #agent-header-controls { display: flex; gap: 10px; cursor: pointer; }
+    
+    /* 消息区 */
+    #agent-messages { flex-grow: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #f5f7fa; }
+    .msg { max-width: 85%; padding: 10px 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.5; word-wrap: break-word;}
+    .msg.bot { background: #fff; color: #333; border: 1px solid #eee; align-self: flex-start; border-bottom-left-radius: 0; }
+    .msg.user { background: #0084ff; color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+    
+    /* 输入区 */
+    #agent-input-area { display: flex; border-top: 1px solid #eee; padding: 10px; background: #fff; }
+    #agent-input { flex-grow: 1; border: 1px solid #ccc; border-radius: 20px; padding: 10px 15px; outline: none; font-size: 0.9rem; }
+    #agent-send { background: none; border: none; color: #0084ff; padding: 0 15px; cursor: pointer; font-weight: bold; }
+  </style>
 </head>
 
 <body>
@@ -139,22 +163,87 @@
 
   </main>
 
+  <div id="agent-fab" onclick="toggleAgent()">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12c0 5.52 4.48 10 10 10s10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+  </div>
+
+  <div id="agent-window">
+    <div id="agent-header">
+      <span>📡 呆呆 - 社会雷达小管家</span>
+      <div id="agent-header-controls">
+        <span onclick="toggleAgent()" title="最小化">✖</span>
+      </div>
+    </div>
+    
+    <div id="agent-messages">
+      <div class="msg bot">滴滴！雷达启动！你好呀，我是呆呆。你想让我帮你侦测点什么舆情数据呢？</div>
+    </div>
+
+    <div id="agent-input-area">
+      <input type="text" id="agent-input" placeholder="输入你想查询的内容..." onkeypress="handleEnter(event)">
+      <button id="agent-send" onclick="sendAgentMessage()">发送</button>
+    </div>
+  </div>
+
   <script src="JS/navbar.js"></script>
 
-  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.x.x/libs/cn/index.js"></script>
   <script>
-      new CozeWebSDK.WebChatClient({
-        config: {
-          bot_id: '7595410513413586950',
-        },
-        componentProps: {
-          title: '呆呆 - 社会雷达小管家',
-        },
-        auth: {
-          type: 'token',
-          token: 'cztei_qQv12b1gi78qMweSRAKk6OhPPGe1tihk7yhFLpd2a0SpwFIR75YK3NvvZP43YGG4X'
-        }
-      });
+  function toggleAgent() {
+    const win = document.getElementById('agent-window');
+    win.style.display = win.style.display === 'flex' ? 'none' : 'flex';
+  }
+
+  function appendMsg(sender, text, id = null) {
+    const container = document.getElementById('agent-messages');
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `msg ${sender}`;
+    // 简单的文本换行处理
+    msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+    if (id) msgDiv.id = id;
+    container.appendChild(msgDiv);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function handleEnter(e) {
+    if (e.key === 'Enter') sendAgentMessage();
+  }
+
+  async function sendAgentMessage() {
+    const inputEl = document.getElementById('agent-input');
+    const userText = inputEl.value.trim();
+    if (!userText) return;
+
+    // 1. 显示用户发送的消息
+    appendMsg('user', userText);
+    inputEl.value = '';
+    
+    // 2. 显示等待状态
+    const loadingId = 'loading-' + Date.now();
+    appendMsg('bot', '🧠 呆呆正在飞速思考中...', loadingId);
+
+    try {
+        // 3. 向我们本地运行的 Python 服务器发送请求
+        const response = await fetch("http://127.0.0.1:8000/api/chat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ user_message: userText })
+        });
+
+        if(!response.ok) throw new Error("Python 后端响应异常");
+        
+        const data = await response.json();
+        
+        // 4. 获取成功，移除等待消息并显示实际回复
+        document.getElementById(loadingId).remove();
+        appendMsg('bot', data.reply);
+
+    } catch (error) {
+        document.getElementById(loadingId).remove();
+        appendMsg('bot', `❌ 呼叫呆呆失败！请确保 Python 服务器 (main.py) 已经在后台运行 (端口 8000)。\n错误详情: ${error.message}`);
+    }
+  }
   </script>
 
 </body>
