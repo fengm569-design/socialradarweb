@@ -195,6 +195,21 @@ async function sendAgentMessage() {
   }
 }
 </script>
+  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.x.x/libs/cn/index.js"></script>
+<script>
+    new CozeWebSDK.WebChatClient({
+      config: {
+        bot_id: '7595410513413586950', // 你刚才找到的呆呆专属 ID
+      },
+      componentProps: {
+        title: '呆呆 - 社会雷达小管家',
+      },
+      auth: {
+        type: 'token',
+        token: '[你的Token]' // 把你代码里 cztei_ 开头的那一长串粘贴到这里
+      }
+    });
+</script>
 <body>
 
   <header id="common-header"></header>
