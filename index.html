@@ -159,7 +159,7 @@
     if (e.key === 'Enter') sendAgentMessage();
   }
 
-  async function sendAgentMessage() {异步 函数 sendAgentMessage() {
+  async function sendAgentMessage() {
     const inputEl = document.getElementById('agent-input');
     const userText = inputEl.value.trim();
     if (!userText) return;
@@ -189,7 +189,7 @@
 
     } catch (error) {
         document.getElementById(loadingId).remove();
-        appendMsg('bot', `❌ 呼叫呆呆失败！请检查 Python 服务器 (main.py) 是否已运行在 8000 端口。\n错误详情: ${error.message}`);appendMsg('bot', `❌ 调用呆呆失败！请检查 Python 服务器 (main.py) 是否已运行在 8000 端口。 错误详情:${error.message}`);
+        appendMsg('bot', `❌ 呼叫呆呆失败！请检查 Python 服务器 (main.py) 是否已运行在 8000 端口。\n错误详情: ${error.message}`);
     }
   }
   </script>
