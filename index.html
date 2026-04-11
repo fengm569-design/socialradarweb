@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>社会雷达 Social Radar - 全域舆情感知系统</title>
+  <title>实时舆情智能分析系统 - 全域数据监测与深度洞察</title>
   <link rel="stylesheet" href="CSS/main.css">
 </head>
 <style>
@@ -41,7 +41,7 @@
 
 <div id="agent-window">
   <div id="agent-header">
-    <span>🧠 雷达 Agent 智能体</span>
+    <span>🧠 舆情智能分析 Agent</span>
     <div id="agent-header-controls">
       <span onclick="toggleConfig()" title="配置密钥">⚙️</span>
       <span onclick="toggleAgent()" title="关闭">✖</span>
@@ -49,11 +49,11 @@
   </div>
   
   <div id="agent-messages">
-    <div class="msg bot">你好！我是社会雷达的智能控制中枢。请告诉我你想追踪哪些学术热点？（例如：“帮我抓取大语言模型和强化学习的最新数据”）</div>
+    <div class="msg bot">您好！我是实时舆情分析系统的智能助手。请告诉我您想监测哪个品牌、话题或事件？（例如：“帮我分析最近关于新能源汽车的舆情走势和情感倾向”）</div>
   </div>
 
   <div id="agent-input-area">
-    <input type="text" id="agent-input" placeholder="输入指令唤醒智能体..." onkeypress="handleEnter(event)">
+    <input type="text" id="agent-input" placeholder="输入指令唤醒智能分析..." onkeypress="handleEnter(event)">
     <button id="agent-send" onclick="sendAgentMessage()">发送</button>
   </div>
 
@@ -154,7 +154,7 @@ async function sendAgentMessage() {
               messages: [
                   {
                       role: "system", 
-                      content: "你是一个数据指令提取机器人。用户会输入一段话，你需要从中提取出用户想要搜索的学术名词、机构名或人名。请只返回一个逗号分隔的词汇列表（例如：大语言模型,自动化学会,钱锋）。不要回答任何其他多余的文字，不要用markdown格式。"
+                      content: "你是一个舆情数据指令提取机器人。用户会输入一段话，你需要从中提取出用户想要监测的品牌、事件、机构或名词。请只返回一个逗号分隔的词汇列表（例如：新能源汽车,比亚迪,公关事件）。不要回答任何其他多余的文字，不要用markdown格式。"
                   },
                   { role: "user", content: userText }
               ]
@@ -188,27 +188,12 @@ async function sendAgentMessage() {
           throw new Error(`后台拒接了指令: ${ghRes.status} ${errText}`);
       }
 
-      appendMsg('bot', '🚀 指令已成功下发至云端服务器！爬虫与 NLP 分析引擎正在为您全速运转。大概需要 3~5 分钟，请稍后刷新图表页面查看最新结果。');
+      appendMsg('bot', '🚀 监测指令已下发！数据爬虫与自然语言处理引擎正在全速分析中。请等待 3~5 分钟后刷新图表页面查看最新的舆情态势报告。');
 
   } catch (error) {
       appendMsg('bot', `❌ 执行出错: ${error.message}`);
   }
 }
-</script>
-  <script src="https://lf-cdn.coze.cn/obj/unpkg/flow-platform/chat-app-sdk/1.x.x/libs/cn/index.js"></script>
-<script>
-    new CozeWebSDK.WebChatClient({
-      config: {
-        bot_id: '7595410513413586950', // 你刚才找到的呆呆专属 ID
-      },
-      componentProps: {
-        title: '呆呆 - 社会雷达小管家',
-      },
-      auth: {
-        type: 'token',
-        token: '[你的Token]' // 把你代码里 cztei_ 开头的那一长串粘贴到这里
-      }
-    });
 </script>
 <body>
 
@@ -218,31 +203,31 @@ async function sendAgentMessage() {
     <section class="hero-section">
       <div class="container hero-wrapper">
         <div class="hero-text">
-           <h1>洞察社会脉搏<br><span>构建全域舆情感知雷达</span></h1>
+           <h1>洞察网络声量<br><span>实时舆情智能分析系统</span></h1>
            <div class="hero-subtitle">
-             基于多普勒效应模型的舆情风险预警系统。实时捕捉知乎、微博、小红书的情绪波动，守护个人与企业的声誉安全。
+             融合自然语言处理（NLP）与深度学习技术，全天候监测全网海量信息。精准捕获舆情动态，深度剖析情感倾向，为您提供从数据采集到智能预警的一站式决策支持。
            </div>
            
            <div class="hero-actions">
              <a href="Html/analysis.html" class="btn btn-primary">
                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-               上传数据分析
+               进入数据大屏
              </a>
-             <a href="Html/work.html" class="btn btn-outline">了解核心技术</a>
+             <a href="Html/work.html" class="btn btn-outline">了解分析模型</a>
            </div>
 
            <div class="stats-row">
              <div class="stat-item">
                <div class="num">98%</div>
-               <div class="label">情感识别率</div>
+               <div class="label">NLP情感分析准确率</div>
              </div>
              <div class="stat-item">
                <div class="num">ms级</div>
-               <div class="label">数据响应延迟</div>
+               <div class="label">流计算处理延迟</div>
              </div>
              <div class="stat-item">
-               <div class="num">3+</div>
-               <div class="label">覆盖主流平台</div>
+               <div class="num">全网</div>
+               <div class="label">覆盖核心数据源</div>
              </div>
            </div>
         </div>
@@ -258,7 +243,7 @@ async function sendAgentMessage() {
                <svg viewBox="0 0 1024 1024" fill="#ff2442"><path d="M512 0C229.2 0 0 229.2 0 512s229.2 512 512 512 512-229.2 512-512S794.8 0 512 0zm0 916c-223.2 0-404-180.8-404-404S288.8 108 512 108s404 180.8 404 404-180.8 404-404 404zm206-398c-10-14.6-25.6-22.4-44.2-22.4h-6.2c-10.4 0-20.2 3.2-28.6 8.8-19.4 13.2-32.2 35.2-32.2 60.2 0 16.2 5.4 31.2 14.6 43.2 11.2 14.6 28.2 24 47.4 24 33.6 0 61.8-23.2 69.2-54.6l.6-2.6c1.6-7.2 2.4-14.6 2.4-22.2 0-12.8-2.4-25-6.8-36.4l-16.2 2zM368 368c-55.2 0-100 44.8-100 100s44.8 100 100 100 100-44.8 100-100-44.8-100-100-100zm0 160c-33.2 0-60-26.8-60-60s26.8-60 60-60 60 26.8 60 60-26.8 60-60 60z"/></svg>
            </div>
 
-           <div class="radar-target target-wx" title="微信监测点" onclick="location.href='Html/weibo_data.html'">
+           <div class="radar-target target-wx" title="微博监测点" onclick="location.href='Html/weibo_data.html'">
                <svg viewBox="0 0 1024 1024" fill="#07C160"><path d="M668.6 638.9c0-104.9-95.6-190.6-218.4-190.6S231.8 534 231.8 638.9c0 104.9 95.6 190.6 218.4 190.6 26.5 0 52-4 75.8-11.3l61.6 33.7-14.2-54.6c46.7-41.5 75.2-96.1 75.2-158.4zm233.5-226.5c0-123.7-122.9-224.6-267.7-224.6-144.8 0-267.7 100.9-267.7 224.6 0 123.7 122.9 224.6 267.7 224.6 30.6 0 60.1-4.4 87.8-12.6l67.5 37.1-17.1-59.9c57.5-46.7 91.8-108.8 91.8-179.2z"/></svg>
            </div>
 
@@ -272,68 +257,68 @@ async function sendAgentMessage() {
     <section class="features">
       <div class="container">
         <div class="sec-header">
-          <h2>六大核心技术</h2>
-          <p>构建从感知到决策的全链路舆情防御体系</p>
+          <h2>六大核心能力</h2>
+          <p>构建从数据感知、智能研判到辅助决策的全链路舆情分析矩阵</p>
         </div>
         
         <div class="features-grid">
           <article class="feature-card">
             <div class="feature-icon">📡</div>
-            <h3>舆情信号感知</h3>
-            <p class="feature-desc">全天候扫描社交网络信息流，毫秒级捕捉关键词频率异常与热度跃迁信号。</p>
+            <h3>全网实时监测</h3>
+            <p class="feature-desc">7x24小时不间断采集主流社交平台、新闻门户及视频网站数据，确保舆情信息无死角。</p>
             <ul class="feature-list">
-              <li>多源异构数据采集</li>
-              <li>实时热度异常检测</li>
+              <li>海量数据并发处理</li>
+              <li>多平台无缝对接接入</li>
             </ul>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon">🧠</div>
-            <h3>社会多普勒模型</h3>
-            <p class="feature-desc">独创物理映射算法，将舆论传播速度量化为“频移”，精准预测事件爆发点。</p>
+            <h3>NLP情感计算</h3>
+            <p class="feature-desc">搭载行业领先的大语言模型，精准剥离文本语境，识别公众的真实情绪与潜在立场。</p>
             <ul class="feature-list">
-              <li>传播速度矢量计算</li>
-              <li>舆论加速与衰减建模</li>
+              <li>细粒度情感极性分析</li>
+              <li>反讽与隐喻语境识别</li>
             </ul>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon">🔍</div>
-            <h3>跨平台溯源</h3>
-            <p class="feature-desc">打破数据孤岛，追踪单一事件在知乎、微博、小红书之间的流转路径。</p>
+            <h3>事件演化聚类</h3>
+            <p class="feature-desc">自动将零散信息聚合成完整事件脉络，多维度追踪话题的发酵、爆发与衰退周期。</p>
             <ul class="feature-list">
-              <li>跨平台话题对齐</li>
-              <li>传播源头定位</li>
+              <li>层级化话题聚类算法</li>
+              <li>跨平台传播溯源追踪</li>
             </ul>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon">📊</div>
-            <h3>动态态势图谱</h3>
-            <p class="feature-desc">将复杂的社会情绪转化为直观的可视化图表，让决策者一眼看透全局。</p>
+            <h3>多维数据图谱</h3>
+            <p class="feature-desc">通过交互式数据大屏，将复杂的词频、情感与传播趋势转化为清晰直观的可视化报告。</p>
             <ul class="feature-list">
-              <li>实时热力图</li>
-              <li>情感倾向仪表盘</li>
+              <li>实时声量波动热力图</li>
+              <li>核心传播节点词云矩阵</li>
             </ul>
           </article>
 
           <article class="feature-card">
             <div class="feature-icon">🚨</div>
             <h3>智能分级预警</h3>
-            <p class="feature-desc">基于 AI 风险评估模型，针对不同等级的舆情风险触发差异化警报。</p>
+            <p class="feature-desc">内置智能动态阈值引擎，当负面声量突发或热度异常飙升时，秒级触发定向告警。</p>
             <ul class="feature-list">
-              <li>阈值触发机制</li>
-              <li>多渠道自动推送</li>
+              <li>动态预警阈值计算机制</li>
+              <li>多渠道(邮件/短信)联动通知</li>
             </ul>
           </article>
 
           <article class="feature-card">
-            <div class="feature-icon">🛡️</div>
-            <h3>学术级可信度</h3>
-            <p class="feature-desc">算法透明可解释，所有分析结果均提供完整的置信度区间与数据支撑。</p>
+            <div class="feature-icon">📝</div>
+            <h3>自动研判简报</h3>
+            <p class="feature-desc">AI 深度萃取核心观点，一键生成包含图表数据与策略建议的专业舆情总结报告。</p>
             <ul class="feature-list">
-              <li>原始数据可追溯</li>
-              <li>算法白盒化展示</li>
+              <li>AI 自动撰写深度摘要</li>
+              <li>多维度定制化导出模板</li>
             </ul>
           </article>
         </div>
