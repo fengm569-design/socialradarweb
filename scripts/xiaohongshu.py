@@ -7,8 +7,8 @@ import time
 from cozepy import Coze, TokenAuth, Stream, WorkflowEvent, WorkflowEventType, COZE_CN_BASE_URL
 
 # ================= 配置区 =================
-COZE_API_TOKEN = 'cztei_h77vG4yA7oUblME5xzkM6ryeh54bbogGpZsZ5ye1jxbQ3aJXMJSX1f40N8bLWhyAU'
-WORKFLOW_ID = '7603685878149660718'
+COZE_API_TOKEN = 'pat_xw5QvfVWg5MIF6j9IM0PdMCJAMcFhXpSfV8Bvvz7AztoUBVJeGmbb0d3oN9Vct53'
+WORKFLOW_ID = '7627051851595612196'
 
 INPUT_KEYWORDS = [
     "自动化学会", "王飞跃", "杨孟飞", "郑南宁",
@@ -43,57 +43,64 @@ def handle_workflow_iterator(stream: Stream[WorkflowEvent]):
 
             print("✅ 捕获到输出数据，正在清洗并解析...")
 
-            if isinstance(output_data, str):
+            # ================= 核心修复点 =================
+            # 应对 Coze 输出 {"output": ["[{...}]"]} 的嵌套结构
+            if isinstance(output_data, list) and len(output_data) > 0 and isinstance(output_data[0], str):
+                cleaned_str = output_data[0].strip()
+            elif isinstance(output_data, str):
                 cleaned_str = output_data.strip()
+            else:
+                # 如果已经是解析好的字典列表，直接合并并跳过后续解析
+                if isinstance(output_data, list) and len(output_data) > 0 and isinstance(output_data[0], dict):
+                    final_results.extend(output_data)
+                    print(f"   - 🟢 直接提取了 {len(output_data)} 条格式化数据")
+                continue
+            # ==============================================
 
-                # 剥去 Markdown 外壳
-                if cleaned_str.startswith("```json"):
-                    cleaned_str = cleaned_str[7:]
-                elif cleaned_str.startswith("```"):
-                    cleaned_str = cleaned_str[3:]
-                if cleaned_str.endswith("```"):
-                    cleaned_str = cleaned_str[:-3]
-                cleaned_str = cleaned_str.strip()
+            # 剥去 Markdown 外壳
+            if cleaned_str.startswith("```json"):
+                cleaned_str = cleaned_str[7:]
+            elif cleaned_str.startswith("```"):
+                cleaned_str = cleaned_str[3:]
+            if cleaned_str.endswith("```"):
+                cleaned_str = cleaned_str[:-3]
+            cleaned_str = cleaned_str.strip()
 
-                # =============== 核心容错与修复逻辑 ===============
+            # =============== 核心容错与修复逻辑 ===============
+            try:
+                parsed_list = json.loads(cleaned_str)
+                if isinstance(parsed_list, list):
+                    final_results.extend(parsed_list)
+                    print(f"   - 🟢 成功提取 {len(parsed_list)} 条新数据")
+
+            except json.JSONDecodeError as e:
+                print(f"   ⚠️ 遇到不规范的 JSON，正在尝试自动修复...")
                 try:
-                    parsed_list = json.loads(cleaned_str)
+                    fixed_str = re.sub(r',\s*([\]}])', r'\1', cleaned_str)
+                    fixed_str = fixed_str.replace("'", '"')
+
+                    parsed_list = json.loads(fixed_str)
                     if isinstance(parsed_list, list):
                         final_results.extend(parsed_list)
-                        print(f"   - 🟢 成功提取 {len(parsed_list)} 条新数据")
+                        print(f"   - 🔧 自动修复成功！救回 {len(parsed_list)} 条数据")
+                except Exception as e2:
+                    print(f"   ❌ 自动修复失败，此批次数据已损坏。")
 
-                except json.JSONDecodeError as e:
-                    print(f"   ⚠️ 遇到不规范的 JSON，正在尝试自动修复...")
+                    # 定位报错位置
+                    err_pos = getattr(e, 'pos', 0)
+                    start = max(0, err_pos - 40)
+                    end = min(len(cleaned_str), err_pos + 40)
+                    print(f"   🔍 案发现场片段: \n>>> ...{cleaned_str[start:end]}... <<<")
+
+                    # 保存完整的坏死数据，方便人工排查
                     try:
-                        fixed_str = re.sub(r',\s*([\]}])', r'\1', cleaned_str)
-                        fixed_str = fixed_str.replace("'", '"')
-
-                        parsed_list = json.loads(fixed_str)
-                        if isinstance(parsed_list, list):
-                            final_results.extend(parsed_list)
-                            print(f"   - 🔧 自动修复成功！救回 {len(parsed_list)} 条数据")
-                    except Exception as e2:
-                        print(f"   ❌ 自动修复失败，此批次数据已损坏。")
-
-                        # 定位报错位置
-                        err_pos = getattr(e, 'pos', 0)
-                        start = max(0, err_pos - 40)
-                        end = min(len(cleaned_str), err_pos + 40)
-                        print(f"   🔍 案发现场片段: \n>>> ...{cleaned_str[start:end]}... <<<")
-
-                        # === 新增：保存完整的坏死数据，方便人工排查 ===
-                        try:
-                            with open("error_dump.txt", "a", encoding="utf-8") as ef:
-                                ef.write(f"\n\n--- Error Timestamp: {time.strftime('%X')} ---\n")
-                                ef.write(cleaned_str)
-                            print(f"   💾 已将损坏的完整 JSON 文本保存到同目录下的 error_dump.txt 文件中。")
-                        except:
-                            pass
-                # ===================================================
-
-            elif isinstance(output_data, list):
-                final_results.extend(output_data)
-                print(f"   - 🟢 成功提取 {len(output_data)} 条新数据")
+                        with open("error_dump.txt", "a", encoding="utf-8") as ef:
+                            ef.write(f"\n\n--- Error Timestamp: {time.strftime('%X')} ---\n")
+                            ef.write(cleaned_str)
+                        print(f"   💾 已将损坏的完整 JSON 文本保存到同目录下的 error_dump.txt 文件中。")
+                    except:
+                        pass
+            # ===================================================
 
         elif event.event == WorkflowEventType.ERROR:
             print(f"❌ 工作流报错: {event.error}")
@@ -108,7 +115,6 @@ def handle_workflow_iterator(stream: Stream[WorkflowEvent]):
                     interrupt_type=event.interrupt.interrupt_data.type,
                 )
             )
-
 
 def main():
     print(f"🚀 [SDK] 启动批量处理模式，共 {len(INPUT_KEYWORDS)} 个关键词...")
